@@ -9,7 +9,7 @@ export class Display {
 
   private cellSize: number;
 
-  private state: State;
+  public state: State;
 
   private col: number;
   private row: number;
@@ -91,6 +91,8 @@ export class Display {
         this.ctx.fillStyle = "lightblue";
       } else if (cell.state === "path") {
         this.ctx.fillStyle = "yellow";
+      } else if (cell.state === "wall") {
+        this.ctx.fillStyle = "darkslategrey";
       }
 
       this.ctx.fillRect(

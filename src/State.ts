@@ -1,4 +1,4 @@
-import { Cell, type CellState } from "./Cell";
+import { Cell, type CellState } from "./Cell.ts";
 
 type Options = {
   width: number;
@@ -54,11 +54,13 @@ export class State {
       this.start = null;
     } else if (!this.end && this.isCellEmpty(x, y)) {
       this.end = this.changeCellState(x, y, "end");
-      //TODO: FIXME
-      this.BFS(this.start!, this.end);
     } else if (this.getCell(x, y)?.state === "end") {
       this.changeCellState(x, y, "empty");
       this.end = null;
+    } else if (this.getCell(x, y)?.state === "wall") {
+      this.changeCellState(x, y, "empty");
+    } else {
+      this.changeCellState(x, y, "wall");
     }
 
     // this.getNeighbors(x, y);
@@ -90,13 +92,17 @@ export class State {
     return cells;
   }
 
-  BFS(from: Cell, to: Cell) {
+  BFS() {
+    if (!this.start || !this.end) {
+      return;
+    }
+
     let queue: Cell[] = [];
     let visited = new Set();
     const parentsMap = new Map();
 
-    queue.push(from);
-    visited.add(Cell.toKey(from.x, from.y));
+    queue.push(this.start);
+    visited.add(Cell.toKey(this.start.x, this.start.y));
 
     let meow = 0;
     while (queue.length > 0 && meow < 1000) {
@@ -104,12 +110,12 @@ export class State {
 
       let currentCell = queue.shift()!;
 
-      if (currentCell.x === to.x && currentCell.y === to.y) {
-        let key = parentsMap.get(Cell.toKey(to.x, to.y));
+      if (currentCell.x === this.end.x && currentCell.y === this.end.y) {
+        let key = parentsMap.get(Cell.toKey(this.end.x, this.end.y));
         while (parentsMap.has(key) && meow < 1000) {
           meow++;
           const [x, y] = Cell.fromKey(key);
-          if (x !== from.x || y !== from.y) {
+          if (x !== this.start.x || y !== this.start.y) {
             this.changeCellState(x, y, "path");
           }
 
@@ -127,6 +133,10 @@ export class State {
           visited.add(key);
 
           const cell = this.getCell(x, y);
+          if (cell?.state === "wall") {
+            continue;
+          }
+
           if (!cell) {
             throw new Error("meow");
           }

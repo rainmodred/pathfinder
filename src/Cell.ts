@@ -1,4 +1,4 @@
-export type CellState = "start" | "end" | "path" | "search" | "empty";
+export type CellState = "start" | "end" | "path" | "search" | "empty" | "wall";
 
 export class Cell {
   public x: number;
