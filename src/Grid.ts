@@ -12,24 +12,30 @@ export class Grid {
   public width: number;
   public height: number;
 
-  private start: Cell | null;
-  private end: Cell | null;
+  public start: Cell | null;
+  public end: Cell | null;
 
   constructor({ width, height }: Options) {
-    this.cells = new Map();
+    this.width = width;
+    this.height = height;
 
-    for (let i = 0; i < height; i++) {
-      for (let j = 0; j < width; j++) {
+    this.cells = new Map();
+    this.reset();
+
+    this.start = null;
+    this.end = null;
+  }
+
+  reset() {
+    this.start = null;
+    this.end = null;
+
+    for (let i = 0; i < this.height; i++) {
+      for (let j = 0; j < this.width; j++) {
         const cell = new Cell(j, i);
         this.cells.set(Cell.toKey(j, i), cell);
       }
     }
-
-    this.width = width;
-    this.height = height;
-
-    this.start = null;
-    this.end = null;
   }
 
   changeCellState(x: number, y: number, state: CellType) {
@@ -55,6 +61,10 @@ export class Grid {
   }
 
   toggleCell(x: number, y: number) {
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+      return;
+    }
+
     if (!this.start && this.isCellEmpty(x, y)) {
       this.start = this.changeCellState(x, y, "start");
     } else if (this.getCell(x, y)?.type === "start") {
@@ -75,7 +85,7 @@ export class Grid {
   }
 
   getNeighbors(cell: Cell) {
-    const positions = [
+    const directions = [
       [0, -1],
       [1, 0],
       [0, 1],
@@ -83,7 +93,7 @@ export class Grid {
     ];
 
     const cells = [];
-    for (let [posX, posY] of positions) {
+    for (let [posX, posY] of directions) {
       let nextX = cell.x + posX;
       let nextY = cell.y + posY;
       if (
@@ -98,6 +108,7 @@ export class Grid {
     return cells;
   }
 
+  //TODO: Add pathfinding failure handling - BFS doesn't indicate when no path exists
   BFS(animations: Cell[]) {
     if (!this.start || !this.end) {
       return;
@@ -122,7 +133,6 @@ export class Grid {
       }
 
       if (currentCell.x === this.end.x && currentCell.y === this.end.y) {
-        debugger;
         let key = parentsMap.get(Cell.toKey(this.end.x, this.end.y));
         while (parentsMap.has(key)) {
           const [x, y] = Cell.fromKey(key);

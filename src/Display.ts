@@ -10,9 +10,11 @@ export class Display {
 
   public grid: Grid;
 
-  private isAnimationStarted: boolean;
+  public isAnimationStarted: boolean;
   private animations: Cell[];
   private animationIndex: number;
+  private animationSpeed: number = 10;
+  private animationId: number | null = null;
 
   constructor(canvas: HTMLCanvasElement, grid: Grid) {
     this.ctx = canvas.getContext("2d")!;
@@ -24,20 +26,39 @@ export class Display {
 
     this.cellSize = canvas.width / grid.width;
 
+    this.drawGrid();
+
+    this.isAnimationStarted = false;
+    this.animations = [];
+    this.animationIndex = 0;
+
     let rect = this.ctx.canvas.getBoundingClientRect();
     this.ctx.canvas.addEventListener("click", (e) => {
+      if (this.isAnimationStarted) {
+        return;
+      }
       let x = Math.floor((e.clientX - rect.left) / this.cellSize);
       let y = Math.floor((e.clientY - rect.top) / this.cellSize);
 
       this.grid.toggleCell(x, y);
       this.drawCells();
     });
+  }
+  stopAnimation() {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+    this.isAnimationStarted = false;
+  }
 
-    this.drawGrid();
-
+  reset() {
+    this.stopAnimation();
+    this.grid.reset();
     this.isAnimationStarted = false;
     this.animations = [];
     this.animationIndex = 0;
+    this.drawCells();
   }
 
   animate(type: "BFS") {
@@ -52,6 +73,7 @@ export class Display {
 
     if (this.animationIndex >= this.animations.length) {
       this.drawCells();
+      this.isAnimationStarted = false;
       return;
     }
 
@@ -67,7 +89,9 @@ export class Display {
 
     this.animationIndex++;
 
-    setTimeout(() => requestAnimationFrame(() => this.animate("BFS")), 50);
+    setTimeout(() => {
+      this.animationId = requestAnimationFrame(() => this.animate("BFS"));
+    }, this.animationSpeed);
   }
 
   drawGrid() {
@@ -86,10 +110,6 @@ export class Display {
   }
 
   drawCell({ type, x, y }: Cell) {
-    if (type === "empty") {
-      return;
-    }
-
     if (type === "start") {
       this.ctx.fillStyle = "lightgreen";
     } else if (type === "end") {
@@ -102,6 +122,8 @@ export class Display {
       this.ctx.fillStyle = "darkslategrey";
     } else if (type === "current") {
       this.ctx.fillStyle = "orange";
+    } else if (type === "empty") {
+      this.ctx.fillStyle = "white";
     }
 
     this.ctx.fillRect(
@@ -113,10 +135,8 @@ export class Display {
   }
 
   drawCells(currentCell?: Cell) {
-    for (let [key, cell] of this.grid.cells) {
-      let [x, y] = Cell.fromKey(key);
-
-      if (x === currentCell?.x && y === currentCell?.y) {
+    for (let [, cell] of this.grid.cells) {
+      if (cell.x === currentCell?.x && cell.y === currentCell?.y) {
         this.drawCell({ ...cell, type: "current" });
       } else {
         this.drawCell(cell);
