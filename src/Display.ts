@@ -1,5 +1,5 @@
-import { Cell } from "./Cell";
-import type { State } from "./State";
+import { Cell, type CellType } from "./Cell";
+import type { State, Animation } from "./State";
 
 export class Display {
   private ctx: CanvasRenderingContext2D;
@@ -13,6 +13,8 @@ export class Display {
 
   private col: number;
   private row: number;
+
+  private animationIndex: number;
 
   constructor(ctx: CanvasRenderingContext2D, state: State) {
     this.ctx = ctx;
@@ -38,26 +40,31 @@ export class Display {
     this.drawGrid();
     this.drawCells();
 
+    this.animationIndex = 0;
+
     // this.col = 0;
     // this.row = 0;
   }
 
-  anim() {
-    // this.state.addCell(this.col, this.row, "n");
-    // this.drawGrid();
-    // this.drawCells();
-    // this.col++;
-    // if (this.col === this.state.width) {
-    //   this.row++;
-    //   this.col = 0;
-    // }
-    //
-    // if (this.row === this.state.grid[0].length) {
-    //   return;
-    // }
-    //
-    // console.log("this.col", this.col);
-    // requestAnimationFrame(() => this.anim());
+  animate() {
+    if (this.animationIndex >= this.state.animations.length) {
+      this.drawCells();
+      return;
+    }
+
+    const currentAnimation = this.state.animations[this.animationIndex];
+
+    this.state.changeCellState(
+      currentAnimation.x,
+      currentAnimation.y,
+      currentAnimation.type,
+    );
+
+    this.drawCells(currentAnimation);
+
+    this.animationIndex++;
+
+    setTimeout(() => requestAnimationFrame(() => this.animate()), 300);
   }
 
   drawGrid() {
@@ -75,32 +82,41 @@ export class Display {
     }
   }
 
-  drawCells() {
+  drawCell(x: number, y: number, type: CellType) {
+    if (type === "empty") {
+      return;
+    }
+
+    if (type === "start") {
+      this.ctx.fillStyle = "lightgreen";
+    } else if (type === "end") {
+      this.ctx.fillStyle = "lightpink";
+    } else if (type === "search") {
+      this.ctx.fillStyle = "lightblue";
+    } else if (type === "path") {
+      this.ctx.fillStyle = "yellow";
+    } else if (type === "wall") {
+      this.ctx.fillStyle = "darkslategrey";
+    } else if (type === "current") {
+      this.ctx.fillStyle = "orange";
+    }
+
+    this.ctx.fillRect(
+      x * this.cellSize + 1,
+      y * this.cellSize + 1,
+      this.cellSize - 1,
+      this.cellSize - 1,
+    );
+  }
+
+  drawCells(currentAnimation?: Animation) {
     for (let [key, cell] of this.state.grid) {
-      if (cell.state === "empty") {
-        continue;
-      }
-
       let [x, y] = Cell.fromKey(key);
-
-      if (cell.state === "start") {
-        this.ctx.fillStyle = "lightgreen";
-      } else if (cell.state === "end") {
-        this.ctx.fillStyle = "lightpink";
-      } else if (cell.state === "search") {
-        this.ctx.fillStyle = "lightblue";
-      } else if (cell.state === "path") {
-        this.ctx.fillStyle = "yellow";
-      } else if (cell.state === "wall") {
-        this.ctx.fillStyle = "darkslategrey";
+      if (x === currentAnimation?.x && y === currentAnimation?.y) {
+        this.drawCell(x, y, "current");
+      } else {
+        this.drawCell(x, y, cell.type);
       }
-
-      this.ctx.fillRect(
-        x * this.cellSize + 1,
-        y * this.cellSize + 1,
-        this.cellSize - 1,
-        this.cellSize - 1,
-      );
     }
   }
 }

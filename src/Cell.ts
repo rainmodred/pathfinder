@@ -1,14 +1,21 @@
-export type CellState = "start" | "end" | "path" | "search" | "empty" | "wall";
+export type CellType =
+  | "start"
+  | "end"
+  | "path"
+  | "search"
+  | "empty"
+  | "wall"
+  | "current";
 
 export class Cell {
   public x: number;
   public y: number;
-  public state: CellState;
+  public type: CellType;
 
-  constructor(x: number, y: number, state: CellState = "empty") {
+  constructor(x: number, y: number, state: CellType = "empty") {
     this.x = x;
     this.y = y;
-    this.state = state;
+    this.type = state;
   }
 
   static toKey(x: number, y: number) {

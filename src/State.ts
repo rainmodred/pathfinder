@@ -1,8 +1,14 @@
-import { Cell, type CellState } from "./Cell.ts";
+import { Cell, type CellType } from "./Cell.ts";
 
 type Options = {
   width: number;
   height: number;
+};
+
+export type Animation = {
+  type: "search" | "path" | "current";
+  x: number;
+  y: number;
 };
 
 export class State {
@@ -12,6 +18,8 @@ export class State {
 
   private start: Cell | null;
   private end: Cell | null;
+
+  public animations: Animation[];
 
   constructor({ width, height }: Options) {
     this.grid = new Map();
@@ -27,9 +35,11 @@ export class State {
 
     this.start = null;
     this.end = null;
+
+    this.animations = [];
   }
 
-  changeCellState(x: number, y: number, state: CellState) {
+  changeCellState(x: number, y: number, state: CellType) {
     const cell = new Cell(x, y, state);
 
     this.grid.set(Cell.toKey(x, y), cell);
@@ -39,25 +49,30 @@ export class State {
   getCell(x: number, y: number) {
     let key = Cell.toKey(x, y);
 
-    return this.grid.get(key);
+    const cell = this.grid.get(key);
+    if (!cell) {
+      throw new Error("cell is not found");
+    }
+
+    return cell;
   }
 
   isCellEmpty(x: number, y: number) {
-    return this.getCell(x, y)?.state === "empty";
+    return this.getCell(x, y)?.type === "empty";
   }
 
   toggleCell(x: number, y: number, update: () => void) {
     if (!this.start && this.isCellEmpty(x, y)) {
       this.start = this.changeCellState(x, y, "start");
-    } else if (this.getCell(x, y)?.state === "start") {
+    } else if (this.getCell(x, y)?.type === "start") {
       this.changeCellState(x, y, "empty");
       this.start = null;
     } else if (!this.end && this.isCellEmpty(x, y)) {
       this.end = this.changeCellState(x, y, "end");
-    } else if (this.getCell(x, y)?.state === "end") {
+    } else if (this.getCell(x, y)?.type === "end") {
       this.changeCellState(x, y, "empty");
       this.end = null;
-    } else if (this.getCell(x, y)?.state === "wall") {
+    } else if (this.getCell(x, y)?.type === "wall") {
       this.changeCellState(x, y, "empty");
     } else {
       this.changeCellState(x, y, "wall");
@@ -97,6 +112,7 @@ export class State {
       return;
     }
 
+    let steps = 0;
     let queue: Cell[] = [];
     let visited = new Set();
     const parentsMap = new Map();
@@ -105,14 +121,24 @@ export class State {
     visited.add(Cell.toKey(this.start.x, this.start.y));
 
     while (queue.length > 0) {
+      steps++;
       let currentCell = queue.shift()!;
 
+      if (currentCell.type !== "start" && currentCell.type !== "end") {
+        this.animations.push({
+          x: currentCell.x,
+          y: currentCell.y,
+          type: "search",
+        });
+      }
+
       if (currentCell.x === this.end.x && currentCell.y === this.end.y) {
+        debugger;
         let key = parentsMap.get(Cell.toKey(this.end.x, this.end.y));
         while (parentsMap.has(key)) {
           const [x, y] = Cell.fromKey(key);
           if (x !== this.start.x || y !== this.start.y) {
-            this.changeCellState(x, y, "path");
+            this.animations.push({ x, y, type: "path" });
           }
 
           key = parentsMap.get(Cell.toKey(x, y));
@@ -129,20 +155,12 @@ export class State {
           visited.add(key);
 
           const cell = this.getCell(x, y);
-          if (cell?.state === "wall") {
+          if (cell?.type === "wall") {
             continue;
-          }
-
-          if (!cell) {
-            throw new Error("cell is not found");
           }
 
           queue.push(cell);
           parentsMap.set(key, Cell.toKey(currentCell.x, currentCell.y));
-
-          if (this.isCellEmpty(x, y)) {
-            this.changeCellState(x, y, "search");
-          }
         }
       }
     }
