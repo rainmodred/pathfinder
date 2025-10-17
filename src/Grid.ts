@@ -1,32 +1,27 @@
 import { Cell, type CellType } from "./Cell.ts";
 
+export type Cells = Map<string, Cell>;
+
 type Options = {
   width: number;
   height: number;
 };
 
-export type Animation = {
-  type: "search" | "path" | "current";
-  x: number;
-  y: number;
-};
-
-export class State {
-  public grid: Map<string, Cell>;
+export class Grid {
+  public cells: Cells;
   public width: number;
   public height: number;
 
   private start: Cell | null;
   private end: Cell | null;
 
-  public animations: Animation[];
-
   constructor({ width, height }: Options) {
-    this.grid = new Map();
+    this.cells = new Map();
+
     for (let i = 0; i < height; i++) {
       for (let j = 0; j < width; j++) {
         const cell = new Cell(j, i);
-        this.grid.set(Cell.toKey(j, i), cell);
+        this.cells.set(Cell.toKey(j, i), cell);
       }
     }
 
@@ -35,21 +30,19 @@ export class State {
 
     this.start = null;
     this.end = null;
-
-    this.animations = [];
   }
 
   changeCellState(x: number, y: number, state: CellType) {
     const cell = new Cell(x, y, state);
 
-    this.grid.set(Cell.toKey(x, y), cell);
+    this.cells.set(Cell.toKey(x, y), cell);
     return cell;
   }
 
   getCell(x: number, y: number) {
     let key = Cell.toKey(x, y);
 
-    const cell = this.grid.get(key);
+    const cell = this.cells.get(key);
     if (!cell) {
       throw new Error("cell is not found");
     }
@@ -61,7 +54,7 @@ export class State {
     return this.getCell(x, y)?.type === "empty";
   }
 
-  toggleCell(x: number, y: number, update: () => void) {
+  toggleCell(x: number, y: number) {
     if (!this.start && this.isCellEmpty(x, y)) {
       this.start = this.changeCellState(x, y, "start");
     } else if (this.getCell(x, y)?.type === "start") {
@@ -78,8 +71,6 @@ export class State {
       this.changeCellState(x, y, "wall");
     }
 
-    // this.getNeighbors(x, y);
-    update();
     return;
   }
 
@@ -107,12 +98,11 @@ export class State {
     return cells;
   }
 
-  BFS() {
+  BFS(animations: Cell[]) {
     if (!this.start || !this.end) {
       return;
     }
 
-    let steps = 0;
     let queue: Cell[] = [];
     let visited = new Set();
     const parentsMap = new Map();
@@ -121,11 +111,10 @@ export class State {
     visited.add(Cell.toKey(this.start.x, this.start.y));
 
     while (queue.length > 0) {
-      steps++;
       let currentCell = queue.shift()!;
 
       if (currentCell.type !== "start" && currentCell.type !== "end") {
-        this.animations.push({
+        animations.push({
           x: currentCell.x,
           y: currentCell.y,
           type: "search",
@@ -138,7 +127,7 @@ export class State {
         while (parentsMap.has(key)) {
           const [x, y] = Cell.fromKey(key);
           if (x !== this.start.x || y !== this.start.y) {
-            this.animations.push({ x, y, type: "path" });
+            animations.push({ x, y, type: "path" });
           }
 
           key = parentsMap.get(Cell.toKey(x, y));

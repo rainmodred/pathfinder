@@ -1,60 +1,63 @@
-import { Cell, type CellType } from "./Cell";
-import type { State, Animation } from "./State";
+import { Cell } from "./Cell";
+import type { Grid } from "./Grid";
 
 export class Display {
   private ctx: CanvasRenderingContext2D;
 
+  private cellSize: number;
   private width: number;
   private height: number;
 
-  private cellSize: number;
+  public grid: Grid;
 
-  public state: State;
-
-  private col: number;
-  private row: number;
-
+  private isAnimationStarted: boolean;
+  private animations: Cell[];
   private animationIndex: number;
 
-  constructor(ctx: CanvasRenderingContext2D, state: State) {
-    this.ctx = ctx;
-    this.width = ctx.canvas.width;
-    this.height = ctx.canvas.height;
+  constructor(canvas: HTMLCanvasElement, grid: Grid) {
+    this.ctx = canvas.getContext("2d")!;
 
-    //add grid length instead of grid[0] ?
-    this.cellSize = this.width / state.width;
+    this.grid = grid;
 
-    this.state = state;
+    this.width = canvas.width;
+    this.height = canvas.height;
+
+    this.cellSize = canvas.width / grid.width;
 
     let rect = this.ctx.canvas.getBoundingClientRect();
     this.ctx.canvas.addEventListener("click", (e) => {
       let x = Math.floor((e.clientX - rect.left) / this.cellSize);
       let y = Math.floor((e.clientY - rect.top) / this.cellSize);
 
-      this.state.toggleCell(x, y, () => {
-        this.drawGrid();
-        this.drawCells();
-      });
+      this.grid.toggleCell(x, y);
+      this.drawCells();
     });
 
     this.drawGrid();
-    this.drawCells();
 
+    this.isAnimationStarted = false;
+    this.animations = [];
     this.animationIndex = 0;
-
-    // this.col = 0;
-    // this.row = 0;
   }
 
-  animate() {
-    if (this.animationIndex >= this.state.animations.length) {
+  animate(type: "BFS") {
+    if (!this.isAnimationStarted) {
+      switch (type) {
+        case "BFS":
+          this.grid.BFS(this.animations);
+      }
+    }
+
+    this.isAnimationStarted = true;
+
+    if (this.animationIndex >= this.animations.length) {
       this.drawCells();
       return;
     }
 
-    const currentAnimation = this.state.animations[this.animationIndex];
+    const currentAnimation = this.animations[this.animationIndex];
 
-    this.state.changeCellState(
+    this.grid.changeCellState(
       currentAnimation.x,
       currentAnimation.y,
       currentAnimation.type,
@@ -64,7 +67,7 @@ export class Display {
 
     this.animationIndex++;
 
-    setTimeout(() => requestAnimationFrame(() => this.animate()), 300);
+    setTimeout(() => requestAnimationFrame(() => this.animate("BFS")), 50);
   }
 
   drawGrid() {
@@ -82,7 +85,7 @@ export class Display {
     }
   }
 
-  drawCell(x: number, y: number, type: CellType) {
+  drawCell({ type, x, y }: Cell) {
     if (type === "empty") {
       return;
     }
@@ -109,13 +112,14 @@ export class Display {
     );
   }
 
-  drawCells(currentAnimation?: Animation) {
-    for (let [key, cell] of this.state.grid) {
+  drawCells(currentCell?: Cell) {
+    for (let [key, cell] of this.grid.cells) {
       let [x, y] = Cell.fromKey(key);
-      if (x === currentAnimation?.x && y === currentAnimation?.y) {
-        this.drawCell(x, y, "current");
+
+      if (x === currentCell?.x && y === currentCell?.y) {
+        this.drawCell({ ...cell, type: "current" });
       } else {
-        this.drawCell(x, y, cell.type);
+        this.drawCell(cell);
       }
     }
   }
