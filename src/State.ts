@@ -104,16 +104,12 @@ export class State {
     queue.push(this.start);
     visited.add(Cell.toKey(this.start.x, this.start.y));
 
-    let meow = 0;
-    while (queue.length > 0 && meow < 1000) {
-      meow++;
-
+    while (queue.length > 0) {
       let currentCell = queue.shift()!;
 
       if (currentCell.x === this.end.x && currentCell.y === this.end.y) {
         let key = parentsMap.get(Cell.toKey(this.end.x, this.end.y));
-        while (parentsMap.has(key) && meow < 1000) {
-          meow++;
+        while (parentsMap.has(key)) {
           const [x, y] = Cell.fromKey(key);
           if (x !== this.start.x || y !== this.start.y) {
             this.changeCellState(x, y, "path");
@@ -138,7 +134,7 @@ export class State {
           }
 
           if (!cell) {
-            throw new Error("meow");
+            throw new Error("cell is not found");
           }
 
           queue.push(cell);
