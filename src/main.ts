@@ -10,12 +10,16 @@ const grid = new Grid({ width: 10, height: 10 });
 const display = new Display(canvas, grid);
 
 findBtn?.addEventListener("click", () => {
+  // display.grid.A_Star();
+  // return;
+
   //TODO: disable buttons
   if (!display.grid.start || !display.grid.end) {
     return;
   }
 
-  display.animate("BFS");
+  display.animate("A_STAR");
+  // display.animate("A_STAR");
 
   if (display.isAnimationStarted) {
     findBtn.disabled = true;

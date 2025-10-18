@@ -164,4 +164,110 @@ export class Grid {
       }
     }
   }
+
+  heuristic(x: number, y: number) {
+    //manhattan distance
+    // return Math.abs(this.end!.x - x) + Math.abs(this.end!.y - y);
+
+    return Math.floor(
+      Math.sqrt((this.end!.x - x) ** 2 + (this.end!.y - y) ** 2),
+    );
+  }
+
+  A_Star(animations: Cell[]) {
+    if (!this.start || !this.end) {
+      return;
+    }
+
+    const openSet = [this.start];
+    const cameFrom = new Map();
+
+    const gScore = new Map();
+    // for (let [key, cell] of this.cells) {
+    //   if (this.isCellEmpty(cell.x, cell.y)) {
+    //     gScore.set(key, Infinity);
+    //   }
+    // }
+    gScore.set(Cell.toKey(this.start.x, this.start.y), 0);
+
+    const fScore = new Map<string, number>();
+    // for (let [key, cell] of this.cells) {
+    //   if (this.isCellEmpty(cell.x, cell.y)) {
+    //     fScore.set(key, Infinity);
+    //   }
+    // }
+    fScore.set(
+      Cell.toKey(this.start.x, this.start.y),
+      this.heuristic(this.start.x, this.start.y),
+    );
+
+    //TODO: use priority queue
+    function getCurrent() {
+      let lowestFscore = Infinity;
+      let lowestIndex = -1;
+
+      for (let i = 0; i < openSet.length; i++) {
+        const cell = openSet[i];
+        const key = Cell.toKey(cell.x, cell.y);
+        const f = fScore.get(key);
+        if (f !== undefined && f < lowestFscore) {
+          lowestIndex = i;
+          lowestFscore = f;
+        }
+      }
+
+      return openSet.splice(lowestIndex, 1)[0];
+    }
+
+    while (openSet.length > 0) {
+      let current = getCurrent();
+      let currentKey = Cell.toKey(current.x, current.y);
+      if (current.x === this.end.x && current.y === this.end.y) {
+        let pathLength = 0;
+        while (cameFrom.has(currentKey)) {
+          currentKey = cameFrom.get(currentKey);
+
+          let [x, y] = Cell.fromKey(currentKey);
+          let cell = this.getCell(x, y);
+
+          if (cell.x !== this.start.x || cell.y !== this.start.y) {
+            pathLength++;
+            animations.push({ ...cell, type: "path" });
+          }
+        }
+        console.log("pathLength:", pathLength);
+        return;
+      }
+
+      // animations.push({ ...current, type: "current" });
+
+      const neighbors = this.getNeighbors(current);
+      for (let [x, y] of neighbors) {
+        let key = Cell.toKey(x, y);
+        let tentativeGscore = gScore.get(currentKey) + 1;
+
+        let g = gScore.get(key) ?? Infinity;
+        if (tentativeGscore < g) {
+          cameFrom.set(key, currentKey);
+          gScore.set(key, tentativeGscore);
+          fScore.set(key, tentativeGscore + this.heuristic(x, y));
+
+          const cell = this.getCell(x, y);
+          if (
+            cell.type !== "wall" &&
+            openSet.filter((cell) => cell.x === x && cell.y === y).length === 0
+          ) {
+            openSet.push(cell);
+
+            if (cell.x !== this.end.x || cell.y !== this.end.y) {
+              animations.push({ ...cell, type: "search" });
+            }
+          }
+        }
+      }
+    }
+
+    console.log("fail");
+    return false;
+  }
 }

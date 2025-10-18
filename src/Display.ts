@@ -61,12 +61,20 @@ export class Display {
     this.drawCells();
   }
 
-  animate(type: "BFS") {
+  animate(type: "BFS" | "A_STAR") {
     if (!this.isAnimationStarted) {
+      let startTime = performance.now();
       switch (type) {
         case "BFS":
           this.grid.BFS(this.animations);
+          break;
+        case "A_STAR":
+          this.grid.A_Star(this.animations);
+          break;
       }
+      let endTime = performance.now();
+      console.log(`${endTime - startTime} milliseconds`);
+      console.log("this.animations:", this.animations);
     }
 
     this.isAnimationStarted = true;
@@ -90,7 +98,7 @@ export class Display {
     this.animationIndex++;
 
     setTimeout(() => {
-      this.animationId = requestAnimationFrame(() => this.animate("BFS"));
+      this.animationId = requestAnimationFrame(() => this.animate(type));
     }, this.animationSpeed);
   }
 
