@@ -1,4 +1,5 @@
 import { Cell, type CellType } from "./Cell.ts";
+import { type Animation } from "./Display.ts";
 
 export type Cells = Map<string, Cell>;
 
@@ -33,7 +34,7 @@ export class Grid {
     for (let i = 0; i < this.height; i++) {
       for (let j = 0; j < this.width; j++) {
         const cell = new Cell(j, i);
-        this.cells.set(Cell.toKey(j, i), cell);
+        this.cells.set(cell.key, cell);
       }
     }
   }
@@ -41,7 +42,7 @@ export class Grid {
   changeCellState(x: number, y: number, state: CellType) {
     const cell = new Cell(x, y, state);
 
-    this.cells.set(Cell.toKey(x, y), cell);
+    this.cells.set(cell.key, cell);
     return cell;
   }
 
@@ -94,72 +95,75 @@ export class Grid {
 
     const cells = [];
     for (let [posX, posY] of directions) {
-      let nextX = cell.x + posX;
-      let nextY = cell.y + posY;
-      if (
-        nextX >= 0 &&
-        nextX < this.width &&
-        nextY >= 0 &&
-        nextY < this.height
-      ) {
-        cells.push([nextX, nextY]);
+      let x = cell.x + posX;
+      let y = cell.y + posY;
+      if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+        cells.push(this.getCell(x, y));
       }
     }
     return cells;
   }
 
+  reconstuctPath(cameFrom: Map<string, string>, animations: Animation[]) {
+    if (!this.start || !this.end) {
+      return;
+    }
+
+    let pathLength = 0;
+    let key = cameFrom.get(this.end.key);
+    while (key && cameFrom.has(key)) {
+      const [x, y] = Cell.fromKey(key);
+      if (x !== this.start.x || y !== this.start.y) {
+        animations.push({ x, y, type: "path" });
+        pathLength++;
+      }
+
+      key = cameFrom.get(Cell.toKey(x, y));
+    }
+
+    console.log("pathLength:", pathLength);
+    return;
+  }
+
   //TODO: Add pathfinding failure handling - BFS doesn't indicate when no path exists
-  BFS(animations: Cell[]) {
+  BFS(animations: Animation[]) {
     if (!this.start || !this.end) {
       return;
     }
 
     let queue: Cell[] = [];
     let visited = new Set();
-    const parentsMap = new Map();
+    const cameFrom = new Map();
 
     queue.push(this.start);
-    visited.add(Cell.toKey(this.start.x, this.start.y));
+    visited.add(this.start.key);
 
     while (queue.length > 0) {
-      let currentCell = queue.shift()!;
+      let current = queue.shift()!;
 
-      if (currentCell.type !== "start" && currentCell.type !== "end") {
-        animations.push({
-          x: currentCell.x,
-          y: currentCell.y,
-          type: "search",
-        });
+      if (
+        (current.x !== this.end.x || current.y !== this.end.y) &&
+        (current.x !== this.start.x || current.y !== this.start.y)
+      ) {
+        animations.push({ ...current, type: "search" });
       }
 
-      if (currentCell.x === this.end.x && currentCell.y === this.end.y) {
-        let key = parentsMap.get(Cell.toKey(this.end.x, this.end.y));
-        while (parentsMap.has(key)) {
-          const [x, y] = Cell.fromKey(key);
-          if (x !== this.start.x || y !== this.start.y) {
-            animations.push({ x, y, type: "path" });
-          }
-
-          key = parentsMap.get(Cell.toKey(x, y));
-        }
-
+      if (current.x === this.end.x && current.y === this.end.y) {
+        this.reconstuctPath(cameFrom, animations);
         return;
       }
 
-      let neighbors = this.getNeighbors(currentCell);
-      for (let [x, y] of neighbors) {
-        let key = Cell.toKey(x, y);
+      let neighbors = this.getNeighbors(current);
+      for (let neighbor of neighbors) {
+        if (!visited.has(neighbor.key)) {
+          visited.add(neighbor.key);
 
-        if (!visited.has(key)) {
-          visited.add(key);
-
-          const cell = this.getCell(x, y);
-          if (cell?.type === "wall") {
+          if (neighbor?.type === "wall") {
             continue;
           }
 
-          queue.push(cell);
-          parentsMap.set(key, Cell.toKey(currentCell.x, currentCell.y));
+          queue.push(neighbor);
+          cameFrom.set(neighbor.key, current.key);
         }
       }
     }
@@ -174,7 +178,7 @@ export class Grid {
     );
   }
 
-  A_Star(animations: Cell[]) {
+  A_Star(animations: Animation[]) {
     if (!this.start || !this.end) {
       return;
     }
@@ -183,23 +187,10 @@ export class Grid {
     const cameFrom = new Map();
 
     const gScore = new Map();
-    // for (let [key, cell] of this.cells) {
-    //   if (this.isCellEmpty(cell.x, cell.y)) {
-    //     gScore.set(key, Infinity);
-    //   }
-    // }
-    gScore.set(Cell.toKey(this.start.x, this.start.y), 0);
+    gScore.set(this.start.key, 0);
 
     const fScore = new Map<string, number>();
-    // for (let [key, cell] of this.cells) {
-    //   if (this.isCellEmpty(cell.x, cell.y)) {
-    //     fScore.set(key, Infinity);
-    //   }
-    // }
-    fScore.set(
-      Cell.toKey(this.start.x, this.start.y),
-      this.heuristic(this.start.x, this.start.y),
-    );
+    fScore.set(this.start.key, this.heuristic(this.start.x, this.start.y));
 
     //TODO: use priority queue
     function getCurrent() {
@@ -221,47 +212,39 @@ export class Grid {
 
     while (openSet.length > 0) {
       let current = getCurrent();
-      let currentKey = Cell.toKey(current.x, current.y);
+
+      if (
+        (current.x !== this.end.x || current.y !== this.end.y) &&
+        (current.x !== this.start.x || current.y !== this.start.y)
+      ) {
+        animations.push({ ...current, type: "search" });
+      }
+
       if (current.x === this.end.x && current.y === this.end.y) {
-        let pathLength = 0;
-        while (cameFrom.has(currentKey)) {
-          currentKey = cameFrom.get(currentKey);
-
-          let [x, y] = Cell.fromKey(currentKey);
-          let cell = this.getCell(x, y);
-
-          if (cell.x !== this.start.x || cell.y !== this.start.y) {
-            pathLength++;
-            animations.push({ ...cell, type: "path" });
-          }
-        }
-        console.log("pathLength:", pathLength);
+        this.reconstuctPath(cameFrom, animations);
         return;
       }
 
-      // animations.push({ ...current, type: "current" });
-
       const neighbors = this.getNeighbors(current);
-      for (let [x, y] of neighbors) {
-        let key = Cell.toKey(x, y);
-        let tentativeGscore = gScore.get(currentKey) + 1;
+      for (let neighbor of neighbors) {
+        let tentativeGscore = gScore.get(current.key) + 1;
 
-        let g = gScore.get(key) ?? Infinity;
+        let g = gScore.get(neighbor.key) ?? Infinity;
         if (tentativeGscore < g) {
-          cameFrom.set(key, currentKey);
-          gScore.set(key, tentativeGscore);
-          fScore.set(key, tentativeGscore + this.heuristic(x, y));
+          cameFrom.set(neighbor.key, current.key);
+          gScore.set(neighbor.key, tentativeGscore);
+          fScore.set(
+            neighbor.key,
+            tentativeGscore + this.heuristic(neighbor.x, neighbor.y),
+          );
 
-          const cell = this.getCell(x, y);
           if (
-            cell.type !== "wall" &&
-            openSet.filter((cell) => cell.x === x && cell.y === y).length === 0
+            neighbor.type !== "wall" &&
+            openSet.filter(
+              (cell) => cell.x === neighbor.x && cell.y === neighbor.y,
+            ).length === 0
           ) {
-            openSet.push(cell);
-
-            if (cell.x !== this.end.x || cell.y !== this.end.y) {
-              animations.push({ ...cell, type: "search" });
-            }
+            openSet.push(neighbor);
           }
         }
       }

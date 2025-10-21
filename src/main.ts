@@ -5,6 +5,7 @@ import "./style.css";
 const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
 const findBtn = document.getElementById("find") as HTMLButtonElement;
 const resetBtn = document.getElementById("reset") as HTMLButtonElement;
+const randomBtn = document.getElementById("random") as HTMLButtonElement;
 
 const grid = new Grid({ width: 10, height: 10 });
 const display = new Display(canvas, grid);
@@ -19,7 +20,6 @@ findBtn?.addEventListener("click", () => {
   }
 
   display.animate("A_STAR");
-  // display.animate("A_STAR");
 
   if (display.isAnimationStarted) {
     findBtn.disabled = true;

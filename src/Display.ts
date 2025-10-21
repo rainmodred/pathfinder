@@ -1,6 +1,12 @@
 import { Cell } from "./Cell";
 import type { Grid } from "./Grid";
 
+export type Animation = {
+  x: number;
+  y: number;
+  type: "path" | "search";
+};
+
 export class Display {
   private ctx: CanvasRenderingContext2D;
 
@@ -11,7 +17,7 @@ export class Display {
   public grid: Grid;
 
   public isAnimationStarted: boolean;
-  private animations: Cell[];
+  private animations: Animation[];
   private animationIndex: number;
   private animationSpeed: number = 10;
   private animationId: number | null = null;
@@ -142,9 +148,9 @@ export class Display {
     );
   }
 
-  drawCells(currentCell?: Cell) {
+  drawCells(animation?: Animation) {
     for (let [, cell] of this.grid.cells) {
-      if (cell.x === currentCell?.x && cell.y === currentCell?.y) {
+      if (cell.x === animation?.x && cell.y === animation?.y) {
         this.drawCell({ ...cell, type: "current" });
       } else {
         this.drawCell(cell);
