@@ -67,10 +67,13 @@ export class Display {
     this.drawCells();
   }
 
-  animate(type: "BFS" | "A_STAR") {
+  animate(type: string) {
     if (!this.isAnimationStarted) {
       let startTime = performance.now();
       switch (type) {
+        case "DFS":
+          this.grid.DFS(this.animations);
+          break;
         case "BFS":
           this.grid.BFS(this.animations);
           break;
@@ -145,6 +148,14 @@ export class Display {
       y * this.cellSize + 1,
       this.cellSize - 1,
       this.cellSize - 1,
+    );
+
+    this.ctx.font = "24px Arial";
+    this.ctx.fillStyle = "black";
+    this.ctx.fillText(
+      `${x}:${y}`,
+      x * this.cellSize + this.cellSize / 2,
+      y * this.cellSize + this.cellSize / 2,
     );
   }
 

@@ -104,7 +104,7 @@ export class Grid {
     return cells;
   }
 
-  reconstuctPath(cameFrom: Map<string, string>, animations: Animation[]) {
+  reconstructPath(cameFrom: Map<string, string>, animations: Animation[]) {
     if (!this.start || !this.end) {
       return;
     }
@@ -149,7 +149,7 @@ export class Grid {
       }
 
       if (current.x === this.end.x && current.y === this.end.y) {
-        this.reconstuctPath(cameFrom, animations);
+        this.reconstructPath(cameFrom, animations);
         return;
       }
 
@@ -163,6 +163,51 @@ export class Grid {
           }
 
           queue.push(neighbor);
+          cameFrom.set(neighbor.key, current.key);
+        }
+      }
+    }
+  }
+
+  DFS(animations: Animation[]) {
+    if (!this.start || !this.end) {
+      return;
+    }
+    const cameFrom = new Map();
+
+    const stack: Cell[] = [this.start];
+
+    const visited = new Set();
+    visited.add(this.start.key);
+
+    while (stack.length > 0) {
+      let current = stack.pop()!;
+
+      if (
+        (current.x !== this.end.x || current.y !== this.end.y) &&
+        (current.x !== this.start.x || current.y !== this.start.y)
+      ) {
+        animations.push({ ...current, type: "search" });
+      }
+
+      if (current.x === this.end.x && current.y === this.end.y) {
+        this.reconstructPath(cameFrom, animations);
+        console.log("nodes visited:", cameFrom);
+        return;
+      }
+
+      if (!visited.has(current.key)) {
+        visited.add(current.key);
+      }
+      const neighbors = this.getNeighbors(current);
+
+      for (let neighbor of neighbors) {
+        if (neighbor?.type === "wall") {
+          continue;
+        }
+
+        if (!visited.has(neighbor.key)) {
+          stack.push(neighbor);
           cameFrom.set(neighbor.key, current.key);
         }
       }
@@ -221,7 +266,7 @@ export class Grid {
       }
 
       if (current.x === this.end.x && current.y === this.end.y) {
-        this.reconstuctPath(cameFrom, animations);
+        this.reconstructPath(cameFrom, animations);
         return;
       }
 

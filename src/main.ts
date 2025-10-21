@@ -10,6 +10,14 @@ const randomBtn = document.getElementById("random") as HTMLButtonElement;
 const grid = new Grid({ width: 10, height: 10 });
 const display = new Display(canvas, grid);
 
+const select = document.getElementById("select") as HTMLSelectElement;
+let selectedAlgoritm = "DFS";
+select.addEventListener("change", (e) => {
+  if (select.value) {
+    selectedAlgoritm = select.value;
+  }
+});
+
 findBtn?.addEventListener("click", () => {
   // display.grid.A_Star();
   // return;
@@ -19,7 +27,8 @@ findBtn?.addEventListener("click", () => {
     return;
   }
 
-  display.animate("A_STAR");
+  console.log("selectedAlgoritm:", selectedAlgoritm);
+  display.animate(selectedAlgoritm);
 
   if (display.isAnimationStarted) {
     findBtn.disabled = true;
