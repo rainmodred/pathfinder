@@ -27,6 +27,14 @@ export class Grid {
     this.end = null;
   }
 
+  clearPath() {
+    for (let [key, cell] of this.cells) {
+      if (cell.type == "path" || cell.type == "search") {
+        this.cells.set(key, new Cell(cell.x, cell.y, "empty"));
+      }
+    }
+  }
+
   reset() {
     this.start = null;
     this.end = null;
@@ -192,7 +200,6 @@ export class Grid {
 
       if (current.x === this.end.x && current.y === this.end.y) {
         this.reconstructPath(cameFrom, animations);
-        console.log("nodes visited:", cameFrom);
         return;
       }
 

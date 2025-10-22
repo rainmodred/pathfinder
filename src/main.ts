@@ -11,10 +11,12 @@ const grid = new Grid({ width: 10, height: 10 });
 const display = new Display(canvas, grid);
 
 const select = document.getElementById("select") as HTMLSelectElement;
-let selectedAlgoritm = "DFS";
+let selectedAlgoritm = "BFS";
 select.addEventListener("change", (e) => {
   if (select.value) {
+    display.clearPath();
     selectedAlgoritm = select.value;
+    findBtn.disabled = false;
   }
 });
 

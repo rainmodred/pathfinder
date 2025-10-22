@@ -40,7 +40,7 @@ export class Display {
 
     let rect = this.ctx.canvas.getBoundingClientRect();
     this.ctx.canvas.addEventListener("click", (e) => {
-      if (this.isAnimationStarted) {
+      if (this.isAnimationStarted || this.animations.length !== 0) {
         return;
       }
       let x = Math.floor((e.clientX - rect.left) / this.cellSize);
@@ -50,6 +50,15 @@ export class Display {
       this.drawCells();
     });
   }
+
+  clearPath() {
+    this.animations = [];
+    this.animationIndex = 0;
+    this.stopAnimation();
+    this.grid.clearPath();
+    this.drawCells();
+  }
+
   stopAnimation() {
     if (this.animationId !== null) {
       cancelAnimationFrame(this.animationId);
@@ -150,13 +159,13 @@ export class Display {
       this.cellSize - 1,
     );
 
-    this.ctx.font = "24px Arial";
-    this.ctx.fillStyle = "black";
-    this.ctx.fillText(
-      `${x}:${y}`,
-      x * this.cellSize + this.cellSize / 2,
-      y * this.cellSize + this.cellSize / 2,
-    );
+    // this.ctx.font = "24px Arial";
+    // this.ctx.fillStyle = "black";
+    // this.ctx.fillText(
+    //   `${x}:${y}`,
+    //   x * this.cellSize + this.cellSize / 2,
+    //   y * this.cellSize + this.cellSize / 2,
+    // );
   }
 
   drawCells(animation?: Animation) {
