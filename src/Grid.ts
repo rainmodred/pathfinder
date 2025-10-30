@@ -1,14 +1,20 @@
 import { Cell, type CellType } from "./Cell.ts";
-import { type Animation } from "./Display.ts";
+import { getRandomEvenNumber, getRandomOddNumber, timeDiff } from "./utils.ts";
 
 export type Cells = Map<string, Cell>;
 
-type Options = {
-  width: number;
-  height: number;
+export const speed = {
+  fast: 10,
+  average: 50,
+  slow: 100,
 };
 
+export type Speed = keyof typeof speed;
+
 export class Grid {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+
   public cells: Cells;
   public width: number;
   public height: number;
@@ -16,7 +22,18 @@ export class Grid {
   public start: Cell | null;
   public end: Cell | null;
 
-  constructor({ width, height }: Options) {
+  private cellSize: number;
+
+  public isAnimationStarted: boolean;
+  private animations: Cell[];
+  private animationIndex: number;
+  private animationSpeed: number = speed.fast;
+  private animationId: number | null = null;
+
+  constructor(canvas: HTMLCanvasElement, width: number, height: number) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d")!;
+
     this.width = width;
     this.height = height;
 
@@ -25,37 +42,272 @@ export class Grid {
 
     this.start = null;
     this.end = null;
+
+    this.cellSize = 40;
+    this.canvas.width = this.cellSize * this.width;
+    this.canvas.height = this.cellSize * this.height;
+
+    this.drawGrid();
+    this.drawCells();
+
+    this.isAnimationStarted = false;
+    this.animations = [];
+    this.animationIndex = 0;
+
+    const rect = this.ctx.canvas.getBoundingClientRect();
+    this.ctx.canvas.addEventListener("click", (e) => {
+      if (this.isAnimationStarted || this.animations.length !== 0) {
+        return;
+      }
+
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      const x = Math.floor(((e.clientX - rect.left) * scaleX) / this.cellSize);
+      const y = Math.floor(((e.clientY - rect.top) * scaleY) / this.cellSize);
+
+      this.toggleCell(y, x);
+
+      this.drawGrid();
+      this.drawCells();
+    });
+  }
+
+  createMaze() {
+    this.reset();
+
+    //border
+    for (const [, cell] of this.cells) {
+      if (
+        cell.row === 0 ||
+        cell.row === this.height - 1 ||
+        cell.col === 0 ||
+        cell.col === this.width - 1
+      ) {
+        this.animations.push({ ...cell, type: "wall" });
+      }
+    }
+
+    this.recursiveDivision(2, 2, this.width - 3, this.height - 3, "VERTICAL");
+    this.animateCreateMaze();
+  }
+
+  animateCreateMaze() {
+    this.isAnimationStarted = true;
+
+    if (this.animationIndex >= this.animations.length) {
+      this.drawCells();
+      this.stopAnimation();
+      return;
+    }
+
+    const currentAnimation = this.animations[this.animationIndex];
+
+    this.changeCellState(
+      currentAnimation.row,
+      currentAnimation.col,
+      currentAnimation.type,
+    );
+
+    this.drawCells(currentAnimation);
+
+    this.animationIndex++;
+
+    setTimeout(() => {
+      this.animationId = requestAnimationFrame(() => this.animateCreateMaze());
+    }, this.animationSpeed);
   }
 
   clearPath() {
-    for (let [key, cell] of this.cells) {
-      if (cell.type == "path" || cell.type == "search") {
-        this.cells.set(key, new Cell(cell.x, cell.y, "empty"));
+    this.stopAnimation();
+
+    for (const [, cell] of this.cells) {
+      if (cell.type === "path" || cell.type === "search") {
+        cell.type = "empty";
       }
     }
+
+    this.drawCells();
+  }
+
+  changeSpeed(name: Speed) {
+    this.animationSpeed = speed[name];
+  }
+
+  stopAnimation() {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+    this.isAnimationStarted = false;
+    this.animations = [];
+    this.animationIndex = 0;
   }
 
   reset() {
+    this.stopAnimation();
     this.start = null;
     this.end = null;
 
-    for (let i = 0; i < this.height; i++) {
-      for (let j = 0; j < this.width; j++) {
-        const cell = new Cell(j, i);
+    for (let row = 0; row < this.height; row++) {
+      for (let col = 0; col < this.width; col++) {
+        const cell = new Cell(row, col);
         this.cells.set(cell.key, cell);
+      }
+    }
+
+    this.drawCells();
+  }
+
+  animate(onFinishAnimation: () => void) {
+    this.isAnimationStarted = true;
+
+    if (this.animationIndex >= this.animations.length) {
+      this.drawCells();
+      this.isAnimationStarted = false;
+
+      onFinishAnimation();
+      return;
+    }
+
+    const currentAnimation = this.animations[this.animationIndex];
+
+    this.changeCellState(
+      currentAnimation.row,
+      currentAnimation.col,
+      currentAnimation.type,
+    );
+
+    this.drawCells(currentAnimation);
+
+    this.animationIndex++;
+
+    setTimeout(() => {
+      this.animationId = requestAnimationFrame(() =>
+        this.animate(onFinishAnimation),
+      );
+    }, this.animationSpeed);
+  }
+
+  drawGrid() {
+    const width = this.canvas.width;
+    const height = this.canvas.height;
+
+    this.ctx.clearRect(0, 0, width, height);
+    this.ctx.strokeStyle = "cyan";
+
+    for (let i = 0; i <= this.width; i++) {
+      const x = i * this.cellSize;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, 0);
+      this.ctx.lineTo(x, height);
+      this.ctx.stroke();
+    }
+
+    for (let i = 0; i <= this.height; i++) {
+      const y = i * this.cellSize;
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, y);
+      this.ctx.lineTo(width, y);
+      this.ctx.stroke();
+    }
+  }
+
+  drawCells(animation?: Cell) {
+    for (const [, cell] of this.cells) {
+      if (cell.row === animation?.row && cell.col === animation?.col) {
+        this.drawCell({ ...cell, type: "current" });
+      } else {
+        this.drawCell(cell);
       }
     }
   }
 
-  changeCellState(x: number, y: number, state: CellType) {
-    const cell = new Cell(x, y, state);
+  drawCell({ type, row, col }: Cell) {
+    const colorScheme = {
+      start: "#10B981",
+      end: "#EF4444",
+      search: "lightblue",
+      path: "yellow",
+      wall: "#283140",
+      current: "orange",
+      empty: "white",
+    };
+
+    this.ctx.fillStyle = colorScheme[type];
+
+    this.ctx.fillRect(
+      col * this.cellSize + 1,
+      row * this.cellSize + 1,
+      this.cellSize - 2,
+      this.cellSize - 2,
+    );
+  }
+
+  recursiveDivision(
+    row: number,
+    col: number,
+    width: number,
+    height: number,
+    orientation: "HORIZONTAL" | "VERTICAL",
+  ) {
+    if (width < row || height < col) {
+      return;
+    }
+
+    if (orientation === "VERTICAL") {
+      const wallX = getRandomEvenNumber(row, width);
+      const passageY = getRandomOddNumber(col, height);
+
+      for (let i = col - 1; i < height + 2; i++) {
+        if (i !== passageY) {
+          this.animations.push(new Cell(i, wallX, "wall"));
+        }
+      }
+
+      if (height - col > wallX - 2 - row) {
+        this.recursiveDivision(row, col, wallX - 2, height, "HORIZONTAL");
+      } else {
+        this.recursiveDivision(row, col, wallX - 2, height, orientation);
+      }
+
+      if (height - col > width - (wallX + 2)) {
+        this.recursiveDivision(wallX + 2, col, width, height, "HORIZONTAL");
+      } else {
+        this.recursiveDivision(wallX + 2, col, width, height, orientation);
+      }
+    } else {
+      const wallY = getRandomEvenNumber(col, height);
+      const passageX = getRandomOddNumber(row, width);
+
+      for (let i = row - 1; i < width + 2; i++) {
+        if (i !== passageX) {
+          this.animations.push(new Cell(wallY, i, "wall"));
+        }
+      }
+
+      if (wallY - 2 - col > width - row) {
+        this.recursiveDivision(row, col, width, wallY - 2, orientation);
+      } else {
+        this.recursiveDivision(row, col, width, wallY - 2, "VERTICAL");
+      }
+      if (height - (wallY + 2) > width - row) {
+        this.recursiveDivision(row, wallY + 2, width, height, orientation);
+      } else {
+        this.recursiveDivision(row, wallY + 2, width, height, "VERTICAL");
+      }
+    }
+  }
+
+  changeCellState(row: number, col: number, state: CellType) {
+    const cell = new Cell(row, col, state);
 
     this.cells.set(cell.key, cell);
     return cell;
   }
 
-  getCell(x: number, y: number) {
-    let key = Cell.toKey(x, y);
+  getCell(row: number, col: number) {
+    const key = Cell.toKey(row, col);
 
     const cell = this.cells.get(key);
     if (!cell) {
@@ -65,29 +317,33 @@ export class Grid {
     return cell;
   }
 
-  isCellEmpty(x: number, y: number) {
-    return this.getCell(x, y)?.type === "empty";
+  isCellEmpty(row: number, col: number) {
+    return this.getCell(row, col)?.type === "empty";
   }
 
-  toggleCell(x: number, y: number) {
-    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+  isSameCell(a: Cell, b: Cell) {
+    return a.row === b.row && a.col === b.col;
+  }
+
+  toggleCell(row: number, col: number) {
+    if (row < 0 || row >= this.height || col < 0 || col >= this.width) {
       return;
     }
 
-    if (!this.start && this.isCellEmpty(x, y)) {
-      this.start = this.changeCellState(x, y, "start");
-    } else if (this.getCell(x, y)?.type === "start") {
-      this.changeCellState(x, y, "empty");
+    if (!this.start && this.isCellEmpty(row, col)) {
+      this.start = this.changeCellState(row, col, "start");
+    } else if (this.getCell(row, col)?.type === "start") {
+      this.changeCellState(row, col, "empty");
       this.start = null;
-    } else if (!this.end && this.isCellEmpty(x, y)) {
-      this.end = this.changeCellState(x, y, "end");
-    } else if (this.getCell(x, y)?.type === "end") {
-      this.changeCellState(x, y, "empty");
+    } else if (!this.end && this.isCellEmpty(row, col)) {
+      this.end = this.changeCellState(row, col, "end");
+    } else if (this.getCell(row, col)?.type === "end") {
+      this.changeCellState(row, col, "empty");
       this.end = null;
-    } else if (this.getCell(x, y)?.type === "wall") {
-      this.changeCellState(x, y, "empty");
+    } else if (this.getCell(row, col)?.type === "wall") {
+      this.changeCellState(row, col, "empty");
     } else {
-      this.changeCellState(x, y, "wall");
+      this.changeCellState(row, col, "wall");
     }
 
     return;
@@ -102,67 +358,91 @@ export class Grid {
     ];
 
     const cells = [];
-    for (let [posX, posY] of directions) {
-      let x = cell.x + posX;
-      let y = cell.y + posY;
-      if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-        cells.push(this.getCell(x, y));
+    for (const [posRow, posCol] of directions) {
+      const row = cell.row + posRow;
+      const col = cell.col + posCol;
+      if (row >= 0 && row < this.height && col >= 0 && col < this.width) {
+        cells.push(this.getCell(row, col));
       }
     }
     return cells;
   }
 
-  reconstructPath(cameFrom: Map<string, string>, animations: Animation[]) {
+  reconstructPath(cameFrom: Map<string, string>) {
     if (!this.start || !this.end) {
-      return;
+      return -1;
     }
 
     let pathLength = 0;
     let key = cameFrom.get(this.end.key);
     while (key && cameFrom.has(key)) {
-      const [x, y] = Cell.fromKey(key);
-      if (x !== this.start.x || y !== this.start.y) {
-        animations.push({ x, y, type: "path" });
+      const [row, col] = Cell.fromKey(key);
+      if (row !== this.start.row || col !== this.start.col) {
+        this.animations.push(new Cell(row, col, "path"));
         pathLength++;
       }
 
-      key = cameFrom.get(Cell.toKey(x, y));
+      key = cameFrom.get(Cell.toKey(row, col));
     }
-
-    console.log("pathLength:", pathLength);
-    return;
+    return pathLength;
   }
 
-  //TODO: Add pathfinding failure handling - BFS doesn't indicate when no path exists
-  BFS(animations: Animation[]) {
+  searchPath(algorithm: string, onFinishSearch: (results: any) => void) {
     if (!this.start || !this.end) {
       return;
     }
 
-    let queue: Cell[] = [];
-    let visited = new Set();
+    let result: { visited: number; pathLength: number } | undefined;
+    const startTime = performance.now();
+
+    switch (algorithm) {
+      case "DFS":
+        result = this.DFS(this.start, this.end);
+        break;
+      case "BFS":
+        result = this.BFS(this.start, this.end);
+        break;
+      case "A_STAR":
+        result = this.A_Star(this.start, this.end);
+        break;
+    }
+
+    if (!result) {
+      throw new Error("missing search result");
+    }
+
+    const endTime = performance.now();
+
+    onFinishSearch([
+      algorithm,
+      timeDiff(startTime, endTime),
+      result?.visited,
+      result?.pathLength,
+    ]);
+  }
+
+  BFS(start: Cell, end: Cell) {
+    const queue: Cell[] = [];
+    const visited = new Set();
     const cameFrom = new Map();
 
-    queue.push(this.start);
-    visited.add(this.start.key);
+    queue.push(start);
+    visited.add(start.key);
 
     while (queue.length > 0) {
-      let current = queue.shift()!;
+      const current = queue.shift()!;
 
-      if (
-        (current.x !== this.end.x || current.y !== this.end.y) &&
-        (current.x !== this.start.x || current.y !== this.start.y)
-      ) {
-        animations.push({ ...current, type: "search" });
+      if (!this.isSameCell(current, end) && !this.isSameCell(current, start)) {
+        this.animations.push({ ...current, type: "search" });
       }
 
-      if (current.x === this.end.x && current.y === this.end.y) {
-        this.reconstructPath(cameFrom, animations);
-        return;
+      if (this.isSameCell(current, end)) {
+        const pathLength = this.reconstructPath(cameFrom);
+        return { visited: visited.size, pathLength };
       }
 
-      let neighbors = this.getNeighbors(current);
-      for (let neighbor of neighbors) {
+      const neighbors = this.getNeighbors(current);
+      for (const neighbor of neighbors) {
         if (!visited.has(neighbor.key)) {
           visited.add(neighbor.key);
 
@@ -177,30 +457,28 @@ export class Grid {
     }
   }
 
-  DFS(animations: Animation[]) {
-    if (!this.start || !this.end) {
-      return;
-    }
+  DFS(start: Cell, end: Cell) {
     const cameFrom = new Map();
 
-    const stack: Cell[] = [this.start];
+    const stack: Cell[] = [start];
 
     const visited = new Set();
-    visited.add(this.start.key);
+    visited.add(start.key);
 
     while (stack.length > 0) {
-      let current = stack.pop()!;
+      const current = stack.pop()!;
 
-      if (
-        (current.x !== this.end.x || current.y !== this.end.y) &&
-        (current.x !== this.start.x || current.y !== this.start.y)
-      ) {
-        animations.push({ ...current, type: "search" });
+      if (!this.isSameCell(current, end) && !this.isSameCell(current, start)) {
+        this.animations.push({ ...current, type: "search" });
       }
 
-      if (current.x === this.end.x && current.y === this.end.y) {
-        this.reconstructPath(cameFrom, animations);
-        return;
+      if (this.isSameCell(current, end)) {
+        const pathLength = this.reconstructPath(cameFrom);
+
+        return {
+          visited: visited.size,
+          pathLength,
+        };
       }
 
       if (!visited.has(current.key)) {
@@ -208,7 +486,7 @@ export class Grid {
       }
       const neighbors = this.getNeighbors(current);
 
-      for (let neighbor of neighbors) {
+      for (const neighbor of neighbors) {
         if (neighbor?.type === "wall") {
           continue;
         }
@@ -221,28 +499,29 @@ export class Grid {
     }
   }
 
-  heuristic(x: number, y: number) {
+  heuristic(row: number, col: number) {
+    if (!this.end) {
+      throw new Error("this.end cell is missing");
+    }
+
     //manhattan distance
-    // return Math.abs(this.end!.x - x) + Math.abs(this.end!.y - y);
+    // return Math.abs(this.end!.row - row) + Math.abs(this.end!.col - col);
 
     return Math.floor(
-      Math.sqrt((this.end!.x - x) ** 2 + (this.end!.y - y) ** 2),
+      Math.sqrt((this.end.row - row) ** 2 + (this.end.col - col) ** 2),
     );
   }
 
-  A_Star(animations: Animation[]) {
-    if (!this.start || !this.end) {
-      return;
-    }
-
-    const openSet = [this.start];
+  A_Star(start: Cell, end: Cell) {
+    let visited = 0;
+    const openSet = [start];
     const cameFrom = new Map();
 
     const gScore = new Map();
-    gScore.set(this.start.key, 0);
+    gScore.set(start.key, 0);
 
     const fScore = new Map<string, number>();
-    fScore.set(this.start.key, this.heuristic(this.start.x, this.start.y));
+    fScore.set(start.key, this.heuristic(start.row, start.col));
 
     //TODO: use priority queue
     function getCurrent() {
@@ -251,58 +530,52 @@ export class Grid {
 
       for (let i = 0; i < openSet.length; i++) {
         const cell = openSet[i];
-        const key = Cell.toKey(cell.x, cell.y);
-        const f = fScore.get(key);
+        const f = fScore.get(cell.key);
         if (f !== undefined && f < lowestFscore) {
           lowestIndex = i;
           lowestFscore = f;
         }
       }
 
+      visited++;
       return openSet.splice(lowestIndex, 1)[0];
     }
 
     while (openSet.length > 0) {
-      let current = getCurrent();
+      const current = getCurrent();
 
-      if (
-        (current.x !== this.end.x || current.y !== this.end.y) &&
-        (current.x !== this.start.x || current.y !== this.start.y)
-      ) {
-        animations.push({ ...current, type: "search" });
+      if (!this.isSameCell(current, end) && !this.isSameCell(current, start)) {
+        this.animations.push({ ...current, type: "search" });
       }
 
-      if (current.x === this.end.x && current.y === this.end.y) {
-        this.reconstructPath(cameFrom, animations);
-        return;
+      if (this.isSameCell(current, end)) {
+        const pathLength = this.reconstructPath(cameFrom);
+
+        return { visited, pathLength };
       }
 
       const neighbors = this.getNeighbors(current);
-      for (let neighbor of neighbors) {
-        let tentativeGscore = gScore.get(current.key) + 1;
+      for (const neighbor of neighbors) {
+        const tentativeGscore = gScore.get(current.key) + 1;
 
-        let g = gScore.get(neighbor.key) ?? Infinity;
+        const g = gScore.get(neighbor.key) ?? Infinity;
         if (tentativeGscore < g) {
           cameFrom.set(neighbor.key, current.key);
           gScore.set(neighbor.key, tentativeGscore);
           fScore.set(
             neighbor.key,
-            tentativeGscore + this.heuristic(neighbor.x, neighbor.y),
+            tentativeGscore + this.heuristic(neighbor.row, neighbor.col),
           );
 
           if (
             neighbor.type !== "wall" &&
-            openSet.filter(
-              (cell) => cell.x === neighbor.x && cell.y === neighbor.y,
-            ).length === 0
+            openSet.filter((cell) => this.isSameCell(neighbor, cell)).length ===
+              0
           ) {
             openSet.push(neighbor);
           }
         }
       }
     }
-
-    console.log("fail");
-    return false;
   }
 }

@@ -1,44 +1,85 @@
-import { Display } from "./Display";
-import { Grid } from "./Grid";
 import "./style.css";
+import { Grid, type Speed } from "./Grid";
+import { Table } from "./Table";
 
 const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-const findBtn = document.getElementById("find") as HTMLButtonElement;
+const findPathBtn = document.getElementById("find-path") as HTMLButtonElement;
+const clearPathBtn = document.getElementById("clear-path") as HTMLButtonElement;
 const resetBtn = document.getElementById("reset") as HTMLButtonElement;
-const randomBtn = document.getElementById("random") as HTMLButtonElement;
+const createMaze = document.getElementById("create-maze") as HTMLButtonElement;
+const selectAlgorithm = document.getElementById(
+  "algorithm",
+) as HTMLSelectElement;
+const selectSpeed = document.getElementById("speed") as HTMLSelectElement;
 
-const grid = new Grid({ width: 10, height: 10 });
-const display = new Display(canvas, grid);
+let width = 52;
+let height = 26;
 
-const select = document.getElementById("select") as HTMLSelectElement;
-let selectedAlgoritm = "BFS";
-select.addEventListener("change", (e) => {
-  if (select.value) {
-    display.clearPath();
-    selectedAlgoritm = select.value;
-    findBtn.disabled = false;
+if (window.innerWidth < 1280) {
+  width = 19;
+  height = 14;
+}
+
+if (window.innerWidth < 780) {
+  width = 9;
+  height = 13;
+}
+
+const grid = new Grid(canvas, width, height);
+
+let selectedAlgorithm = "BFS";
+selectAlgorithm.addEventListener("change", () => {
+  if (selectAlgorithm.value) {
+    grid.clearPath();
+    selectedAlgorithm = selectAlgorithm.value;
+    findPathBtn.disabled = false;
   }
 });
 
-findBtn?.addEventListener("click", () => {
-  // display.grid.A_Star();
-  // return;
+const tableEl = document.querySelector(".results-table") as HTMLTableElement;
+const table = new Table(tableEl, [
+  "algorithm",
+  "time",
+  "visited cells",
+  "path length",
+]);
 
-  //TODO: disable buttons
-  if (!display.grid.start || !display.grid.end) {
+findPathBtn?.addEventListener("click", () => {
+  if (!grid.start || !grid.end) {
     return;
   }
 
-  console.log("selectedAlgoritm:", selectedAlgoritm);
-  display.animate(selectedAlgoritm);
+  grid.searchPath(selectedAlgorithm, (result) => {
+    table.addRow(result);
+  });
+  grid.animate(() => {
+    clearPathBtn.disabled = false;
+    selectAlgorithm.disabled = false;
+  });
 
-  if (display.isAnimationStarted) {
-    findBtn.disabled = true;
+  if (grid.isAnimationStarted) {
+    findPathBtn.disabled = true;
+    selectAlgorithm.disabled = true;
+    clearPathBtn.disabled = true;
   }
 });
 
-resetBtn?.addEventListener("click", () => {
-  display.reset();
+clearPathBtn.addEventListener("click", () => {
+  grid.clearPath();
+  findPathBtn.disabled = false;
+});
 
-  findBtn.disabled = false;
+resetBtn?.addEventListener("click", () => {
+  grid.reset();
+  findPathBtn.disabled = false;
+});
+
+createMaze.addEventListener("click", () => {
+  grid.createMaze();
+});
+
+selectSpeed.addEventListener("change", () => {
+  if (selectSpeed.value) {
+    grid.changeSpeed(selectSpeed.value as Speed);
+  }
 });

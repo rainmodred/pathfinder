@@ -8,15 +8,40 @@
   </head>
   <body>
     <div id="app">
-      <canvas id="canvas" width="800" height="800"></canvas>
-      <div>
-        <select id="select" autocomplete="off">
-          <option value="DFS">DFS</option>
-          <option value="BFS" selected>BFS</option>
-          <option value="A_STAR">A* Search</option>
-        </select>
-        <button id="find">find path</button>
-        <button id="reset">reset</button>
+      <h1>Pathfinder</h1>
+
+      <header class="header">
+        <div class="controls">
+          <select id="algorithm" autocomplete="off">
+            <option value="DFS">DFS</option>
+            <option value="BFS" selected>BFS</option>
+            <option value="A_STAR">A* Search</option>
+          </select>
+          <button id="create-maze">Create maze</button>
+          <button id="find-path">Find path</button>
+          <button id="clear-path">Clear path</button>
+          <button id="reset">Reset</button>
+          <select id="speed" autocomplete="off">
+            <option value="fast" selected>Fast</option>
+            <option value="average">Average</option>
+            <option value="slow">Slow</option>
+          </select>
+        </div>
+
+        <div class="results">
+          <table class="results-table">
+            <!-- <tr> -->
+            <!--   <th>Algorithm</th> -->
+            <!--   <th>Time</th> -->
+            <!--   <th>Visited Cells</th> -->
+            <!--   <th>Path Length</th> -->
+            <!-- </tr> -->
+          </table>
+        </div>
+      </header>
+
+      <div class="canvas-container">
+        <canvas id="canvas"></canvas>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

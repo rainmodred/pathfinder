@@ -8,20 +8,20 @@ export type CellType =
   | "current";
 
 export class Cell {
-  public x: number;
-  public y: number;
+  public row: number;
+  public col: number;
   public type: CellType;
   public key: string;
 
-  constructor(x: number, y: number, state: CellType = "empty") {
-    this.x = x;
-    this.y = y;
+  constructor(row: number, col: number, state: CellType = "empty") {
+    this.row = row;
+    this.col = col;
     this.type = state;
-    this.key = Cell.toKey(x, y);
+    this.key = Cell.toKey(row, col);
   }
 
-  static toKey(x: number, y: number) {
-    return `${x}:${y}`;
+  static toKey(row: number, col: number) {
+    return `${row}:${col}`;
   }
 
   static fromKey(key: string) {
