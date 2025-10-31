@@ -30,7 +30,14 @@ export class Grid {
   private animationSpeed: number = speed.fast;
   private animationId: number | null = null;
 
-  constructor(canvas: HTMLCanvasElement, width: number, height: number) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    {
+      width,
+      height,
+      cellSize,
+    }: { width: number; height: number; cellSize: number },
+  ) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
 
@@ -43,7 +50,7 @@ export class Grid {
     this.start = null;
     this.end = null;
 
-    this.cellSize = 40;
+    this.cellSize = cellSize;
     this.canvas.width = this.cellSize * this.width;
     this.canvas.height = this.cellSize * this.height;
 

@@ -2,6 +2,7 @@ import "./style.css";
 import { Grid, type Speed } from "./Grid";
 import { Table } from "./Table";
 
+const header = document.querySelector(".header") as HTMLHeadElement;
 const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
 const findPathBtn = document.getElementById("find-path") as HTMLButtonElement;
 const clearPathBtn = document.getElementById("clear-path") as HTMLButtonElement;
@@ -12,20 +13,25 @@ const selectAlgorithm = document.getElementById(
 ) as HTMLSelectElement;
 const selectSpeed = document.getElementById("speed") as HTMLSelectElement;
 
-let width = 52;
-let height = 26;
+// let width = 52;
+// let height = 26;
+//
+// if (window.innerWidth < 1280) {
+//   width = 19;
+//   height = 14;
+// }
+//
+// if (window.innerWidth < 780) {
+//   width = 9;
+//   height = 13;
+// }
 
-if (window.innerWidth < 1280) {
-  width = 19;
-  height = 14;
-}
+let cellSize = 30;
+let width = Math.floor(window.innerWidth / cellSize);
 
-if (window.innerWidth < 780) {
-  width = 9;
-  height = 13;
-}
+let height = Math.floor((window.innerHeight - header.clientHeight) / cellSize);
 
-const grid = new Grid(canvas, width, height);
+const grid = new Grid(canvas, { width, height, cellSize });
 
 let selectedAlgorithm = "BFS";
 selectAlgorithm.addEventListener("change", () => {

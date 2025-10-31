@@ -5,12 +5,11 @@
   padding: 0;
   box-sizing: border-box;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-
-  /* outline: 2px solid orange; */
 }
 
 html,
 body {
+  overflow: hidden;
   height: 100%;
 }
 
@@ -18,24 +17,26 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
   background: #f5f7fa;
 }
 
 #app {
-  max-width: 1280px;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
   flex: 1;
   padding: 1rem;
 }
 
 .header {
   display: flex;
+  align-items: center;
   gap: 1rem;
+
+  background: white;
+  border-radius: 10px;
+  padding: 0 1rem;
 }
 
 #canvas {
@@ -45,7 +46,6 @@ body {
 
 .canvas-container {
   flex-grow: 1;
-  max-width: 1280px;
   width: 100%;
   overflow: hidden;
 
@@ -54,13 +54,9 @@ body {
 
 .controls {
   padding: 1rem;
-  /* width: 100%; */
-
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 1rem;
@@ -75,12 +71,6 @@ body {
 
 .results {
   padding: 1rem;
-  /* width: 100%; */
-
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,4 +99,10 @@ th {
 
 td {
   padding: 0 0.25rem;
+}
+
+@media (width <= 768px) {
+  .header {
+    flex-direction: column;
+  }
 }
