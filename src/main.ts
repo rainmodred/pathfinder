@@ -7,7 +7,9 @@ const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
 const findPathBtn = document.getElementById("find-path") as HTMLButtonElement;
 const clearPathBtn = document.getElementById("clear-path") as HTMLButtonElement;
 const resetBtn = document.getElementById("reset") as HTMLButtonElement;
-const createMaze = document.getElementById("create-maze") as HTMLButtonElement;
+const createMazeButton = document.getElementById(
+  "create-maze",
+) as HTMLButtonElement;
 const selectAlgorithm = document.getElementById(
   "algorithm",
 ) as HTMLSelectElement;
@@ -71,8 +73,11 @@ resetBtn?.addEventListener("click", () => {
   findPathBtn.disabled = false;
 });
 
-createMaze.addEventListener("click", () => {
-  grid.createMaze();
+createMazeButton.addEventListener("click", () => {
+  createMazeButton.disabled = true;
+  grid.createMaze(() => {
+    createMazeButton.disabled = false;
+  });
 });
 
 selectSpeed.addEventListener("change", () => {

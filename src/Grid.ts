@@ -43,6 +43,8 @@ export class Grid {
 
     this.width = width;
     this.height = height;
+    this.start = null;
+    this.end = null;
 
     this.cells = new Map();
     this.reset();
@@ -77,7 +79,7 @@ export class Grid {
     });
   }
 
-  createMaze() {
+  createMaze(onCreate: () => void) {
     this.reset();
 
     //border
@@ -93,15 +95,16 @@ export class Grid {
     }
 
     this.recursiveDivision(2, 2, this.width - 3, this.height - 3, "VERTICAL");
-    this.animateCreateMaze();
+    this.animateCreateMaze(onCreate);
   }
 
-  animateCreateMaze() {
+  animateCreateMaze(onCreate: () => void) {
     this.isAnimationStarted = true;
 
     if (this.animationIndex >= this.animations.length) {
       this.drawCells();
       this.stopAnimation();
+      onCreate();
       return;
     }
 
@@ -118,7 +121,9 @@ export class Grid {
     this.animationIndex++;
 
     setTimeout(() => {
-      this.animationId = requestAnimationFrame(() => this.animateCreateMaze());
+      this.animationId = requestAnimationFrame(() =>
+        this.animateCreateMaze(onCreate),
+      );
     }, this.animationSpeed);
   }
 
