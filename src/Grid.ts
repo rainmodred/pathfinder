@@ -47,9 +47,6 @@ export class Grid {
     this.cells = new Map();
     this.reset();
 
-    this.start = null;
-    this.end = null;
-
     this.cellSize = cellSize;
     this.canvas.width = this.cellSize * this.width;
     this.canvas.height = this.cellSize * this.height;
@@ -153,11 +150,23 @@ export class Grid {
 
   reset() {
     this.stopAnimation();
-    this.start = null;
-    this.end = null;
 
     for (let row = 0; row < this.height; row++) {
       for (let col = 0; col < this.width; col++) {
+        if (row === 1 && col === 1) {
+          const cell = new Cell(row, col, "start");
+          this.cells.set(cell.key, cell);
+          this.start = cell;
+          continue;
+        }
+
+        if (row === this.height - 2 && col === this.width - 2) {
+          const cell = new Cell(row, col, "end");
+          this.cells.set(cell.key, cell);
+          this.end = cell;
+          continue;
+        }
+
         const cell = new Cell(row, col);
         this.cells.set(cell.key, cell);
       }
