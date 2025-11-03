@@ -13,23 +13,12 @@ const selectAlgorithm = document.getElementById(
 ) as HTMLSelectElement;
 const selectSpeed = document.getElementById("speed") as HTMLSelectElement;
 
-// let width = 52;
-// let height = 26;
-//
-// if (window.innerWidth < 1280) {
-//   width = 19;
-//   height = 14;
-// }
-//
-// if (window.innerWidth < 780) {
-//   width = 9;
-//   height = 13;
-// }
+const cellSize = 30;
+const width = Math.floor(window.innerWidth / cellSize);
 
-let cellSize = 30;
-let width = Math.floor(window.innerWidth / cellSize);
-
-let height = Math.floor((window.innerHeight - header.clientHeight) / cellSize);
+const height = Math.floor(
+  (window.innerHeight - header.clientHeight - 16) / cellSize,
+);
 
 const grid = new Grid(canvas, { width, height, cellSize });
 
@@ -70,9 +59,11 @@ findPathBtn?.addEventListener("click", () => {
   }
 });
 
+clearPathBtn.disabled = true;
 clearPathBtn.addEventListener("click", () => {
   grid.clearPath();
   findPathBtn.disabled = false;
+  clearPathBtn.disabled = true;
 });
 
 resetBtn?.addEventListener("click", () => {
