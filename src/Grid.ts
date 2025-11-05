@@ -31,6 +31,8 @@ export class Grid {
   private animationId: number | null = null;
 
   private selectedCellType: CellType;
+  private isPlacing: boolean;
+
   constructor(
     canvas: HTMLCanvasElement,
     {
@@ -62,24 +64,58 @@ export class Grid {
     this.animationIndex = 0;
 
     this.selectedCellType = "wall";
+    this.isPlacing = false;
+    this.initListeners();
+  }
+
+  getRowCol(e: MouseEvent) {
     const rect = this.ctx.canvas.getBoundingClientRect();
-    this.ctx.canvas.addEventListener("click", (e) => {
-      if (this.isAnimationStarted || this.animations.length !== 0) {
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+
+    const col = Math.floor(((e.clientX - rect.left) * scaleX) / this.cellSize);
+    const row = Math.floor(((e.clientY - rect.top) * scaleY) / this.cellSize);
+
+    return { row, col };
+  }
+
+  initListeners() {
+    this.ctx.canvas.addEventListener("mousedown", (e) => {
+      //TODO: use states: iddle, animating, etc...
+      if (this.isAnimationStarted || this.animations.length > 0) {
         return;
       }
 
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
+      if (
+        this.selectedCellType === "start" ||
+        this.selectedCellType === "end"
+      ) {
+        this.isPlacing = false;
+      } else {
+        this.isPlacing = true;
+      }
 
-      const x = Math.floor(((e.clientX - rect.left) * scaleX) / this.cellSize);
-      const y = Math.floor(((e.clientY - rect.top) * scaleY) / this.cellSize);
+      const { row, col } = this.getRowCol(e);
+      this.setCellState(row, col, this.selectedCellType);
 
-      this.toggleCell(y, x);
-
-      this.drawGrid();
       this.drawCells();
     });
 
+    this.ctx.canvas.addEventListener("mousemove", (e) => {
+      if (!this.isPlacing) {
+        return;
+      }
+
+      const { row, col } = this.getRowCol(e);
+      this.setCellState(row, col, this.selectedCellType);
+
+      this.drawCells();
+    });
+
+    this.ctx.canvas.addEventListener("mouseup", () => {
+      this.isPlacing = false;
+    });
+  }
 
   setSelectedCellType(type: CellType) {
     this.selectedCellType = type;
@@ -116,7 +152,7 @@ export class Grid {
 
     const currentAnimation = this.animations[this.animationIndex];
 
-    this.changeCellState(
+    this.setCellState(
       currentAnimation.row,
       currentAnimation.col,
       currentAnimation.type,
@@ -199,7 +235,7 @@ export class Grid {
 
     const currentAnimation = this.animations[this.animationIndex];
 
-    this.changeCellState(
+    this.setCellState(
       currentAnimation.row,
       currentAnimation.col,
       currentAnimation.type,
@@ -326,10 +362,28 @@ export class Grid {
     }
   }
 
-  changeCellState(row: number, col: number, state: CellType) {
-    const cell = new Cell(row, col, state);
+  setCellState(row: number, col: number, type: CellType) {
+    const oldCell = this.getCell(row, col);
+    if (
+      type === "wall" &&
+      (oldCell.type === "start" || oldCell.type === "end")
+    ) {
+      return;
+    }
 
+    const cell = new Cell(row, col, type);
     this.cells.set(cell.key, cell);
+
+    if (type === "start" && this.start) {
+      this.start.type = "empty";
+      this.start = cell;
+    }
+
+    if (type === "end" && this.end) {
+      this.end.type = "empty";
+      this.end = cell;
+    }
+
     return cell;
   }
 
@@ -350,30 +404,6 @@ export class Grid {
 
   isSameCell(a: Cell, b: Cell) {
     return a.row === b.row && a.col === b.col;
-  }
-
-  toggleCell(row: number, col: number) {
-    if (row < 0 || row >= this.height || col < 0 || col >= this.width) {
-      return;
-    }
-
-    if (!this.start && this.isCellEmpty(row, col)) {
-      this.start = this.changeCellState(row, col, "start");
-    } else if (this.getCell(row, col)?.type === "start") {
-      this.changeCellState(row, col, "empty");
-      this.start = null;
-    } else if (!this.end && this.isCellEmpty(row, col)) {
-      this.end = this.changeCellState(row, col, "end");
-    } else if (this.getCell(row, col)?.type === "end") {
-      this.changeCellState(row, col, "empty");
-      this.end = null;
-    } else if (this.getCell(row, col)?.type === "wall") {
-      this.changeCellState(row, col, "empty");
-    } else {
-      this.changeCellState(row, col, "wall");
-    }
-
-    return;
   }
 
   getNeighbors(cell: Cell) {
