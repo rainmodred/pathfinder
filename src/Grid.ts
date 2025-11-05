@@ -30,6 +30,7 @@ export class Grid {
   private animationSpeed: number = speed.fast;
   private animationId: number | null = null;
 
+  private selectedCellType: CellType;
   constructor(
     canvas: HTMLCanvasElement,
     {
@@ -60,6 +61,7 @@ export class Grid {
     this.animations = [];
     this.animationIndex = 0;
 
+    this.selectedCellType = "wall";
     const rect = this.ctx.canvas.getBoundingClientRect();
     this.ctx.canvas.addEventListener("click", (e) => {
       if (this.isAnimationStarted || this.animations.length !== 0) {
@@ -77,6 +79,10 @@ export class Grid {
       this.drawGrid();
       this.drawCells();
     });
+
+
+  setSelectedCellType(type: CellType) {
+    this.selectedCellType = type;
   }
 
   createMaze(onCreate: () => void) {

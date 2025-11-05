@@ -1,6 +1,7 @@
 import "./style.css";
 import { Grid, type Speed } from "./Grid";
 import { Table } from "./Table";
+import type { CellType } from "./Cell";
 
 const header = document.querySelector(".header") as HTMLHeadElement;
 const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
@@ -14,6 +15,9 @@ const selectAlgorithm = document.getElementById(
   "algorithm",
 ) as HTMLSelectElement;
 const selectSpeed = document.getElementById("speed") as HTMLSelectElement;
+const selectCellType = document.getElementById(
+  "select-cell",
+) as HTMLSelectElement;
 
 const cellSize = 30;
 const width = Math.floor(window.innerWidth / cellSize);
@@ -85,3 +89,10 @@ selectSpeed.addEventListener("change", () => {
     grid.changeSpeed(selectSpeed.value as Speed);
   }
 });
+
+selectCellType.addEventListener("change", () => {
+  if (selectCellType.value) {
+    grid.setSelectedCellType(selectCellType.value as CellType);
+  }
+});
+
