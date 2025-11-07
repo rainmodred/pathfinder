@@ -5,7 +5,8 @@ export type CellType =
   | "search"
   | "empty"
   | "wall"
-  | "current";
+  | "current"
+  | "hill";
 
 export class Cell {
   public row: number;

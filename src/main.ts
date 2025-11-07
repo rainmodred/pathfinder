@@ -96,3 +96,27 @@ selectCellType.addEventListener("change", () => {
   }
 });
 
+function renderSelectCellType() {
+  const cellTypes = [
+    { label: "empty (1)", value: "empty", selected: false },
+    { label: "wall", value: "wall", selected: true },
+    { label: "hill (5)", value: "hill", selected: false },
+    { label: "start", value: "start", selected: false },
+    { label: "end", value: "end", selected: false },
+  ];
+
+  const fragment = document.createDocumentFragment();
+  for (let { label, value, selected } of cellTypes) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.label = label;
+    option.selected = selected;
+
+    fragment.appendChild(option);
+  }
+
+  selectCellType.appendChild(fragment);
+}
+renderSelectCellType();
+
+// grid.searchPath("DFS", (res) => console.log(res));

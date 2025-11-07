@@ -33,6 +33,8 @@ export class Grid {
   private selectedCellType: CellType;
   private isPlacing: boolean;
 
+  private path: Cell[];
+
   constructor(
     canvas: HTMLCanvasElement,
     {
@@ -50,6 +52,7 @@ export class Grid {
     this.end = null;
 
     this.cells = new Map();
+    this.path = [];
     this.reset();
 
     this.cellSize = cellSize;
@@ -207,18 +210,29 @@ export class Grid {
           continue;
         }
 
-        if (row === this.height - 2 && col === this.width - 2) {
+        if (row === 2 && col === 5) {
           const cell = new Cell(row, col, "end");
           this.cells.set(cell.key, cell);
           this.end = cell;
           continue;
         }
 
+        // if (row === this.height - 2 && col === this.width - 2) {
+        //   const cell = new Cell(row, col, "end");
+        //   this.cells.set(cell.key, cell);
+        //   this.end = cell;
+        //   continue;
+        // }
+
         const cell = new Cell(row, col);
         this.cells.set(cell.key, cell);
       }
     }
 
+    if (!this.end) {
+      throw new Error("start is missing");
+    }
+    this.path = [this.end];
     this.drawCells();
   }
 
@@ -228,6 +242,8 @@ export class Grid {
     if (this.animationIndex >= this.animations.length) {
       this.drawCells();
       this.isAnimationStarted = false;
+
+      this.drawPath();
 
       onFinishAnimation();
       return;
@@ -295,6 +311,7 @@ export class Grid {
       wall: "#283140",
       current: "orange",
       empty: "white",
+      hill: "brown",
     };
 
     this.ctx.fillStyle = colorScheme[type];
@@ -305,6 +322,44 @@ export class Grid {
       this.cellSize - 2,
       this.cellSize - 2,
     );
+  }
+
+  drawPath() {
+    if (!this.start) {
+      throw new Error("end is missing");
+    }
+
+    function getMidpoint(row: number, col: number, size: number) {
+      const x = col * size;
+      const y = row * size;
+
+      const x1 = x + size;
+      const y1 = y + size;
+
+      const mx = (x + x1) / 2;
+      const my = (y + y1) / 2;
+
+      return { x: mx, y: my };
+    }
+
+    this.path.push(this.start);
+    this.ctx.lineWidth = 8;
+    this.ctx.strokeStyle = "yellow";
+    this.ctx.beginPath();
+
+    for (let i = 0; i < this.path.length; i++) {
+      const { row, col } = this.path[i];
+      const { x, y } = getMidpoint(row, col, this.cellSize);
+
+      if (i === 0) {
+        this.ctx.moveTo(x, y);
+        continue;
+      }
+
+      this.ctx.lineTo(x, y);
+    }
+
+    this.ctx.stroke();
   }
 
   recursiveDivision(
@@ -435,7 +490,7 @@ export class Grid {
     while (key && cameFrom.has(key)) {
       const [row, col] = Cell.fromKey(key);
       if (row !== this.start.row || col !== this.start.col) {
-        this.animations.push(new Cell(row, col, "path"));
+        this.path.push(new Cell(row, col, "path"));
         pathLength++;
       }
 
@@ -613,7 +668,9 @@ export class Grid {
 
       const neighbors = this.getNeighbors(current);
       for (const neighbor of neighbors) {
-        const tentativeGscore = gScore.get(current.key) + 1;
+        //TODO: move weight to Cell class
+        const weight = neighbor.type === "hill" ? 5 : 1;
+        const tentativeGscore = gScore.get(current.key) + weight;
 
         const g = gScore.get(neighbor.key) ?? Infinity;
         if (tentativeGscore < g) {
