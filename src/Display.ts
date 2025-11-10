@@ -7,21 +7,20 @@ export const speed = {
   slow: 100,
 };
 
+export type Speed = keyof typeof speed;
+
 export class Display {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
 
-  public isAnimationStarted: boolean;
-  private animations: Cell[];
   private animationIndex: number;
   private animationSpeed: number = speed.fast;
   private animationId: number | null = null;
+  public state: "IDLE" | "STARTED";
 
-  private selectedCellType: CellType;
+  private cellType: CellType;
   private isPlacing: boolean;
   private cellSize: number;
-
-  private path: Cell[];
 
   private grid: Grid;
 
@@ -32,14 +31,19 @@ export class Display {
     this.grid = grid;
     this.cellSize = cellSize;
 
-    this.isAnimationStarted = false;
-    this.animations = [];
-    this.animationIndex = 0;
+    this.canvas.width = this.grid.cols * this.cellSize;
+    this.canvas.height = this.grid.rows * this.cellSize;
 
-    this.selectedCellType = "wall";
+    this.animationIndex = 0;
+    this.state = "IDLE";
+
+    this.cellType = "wall";
     this.isPlacing = false;
 
     this.drawGrid();
+    this.drawCells();
+
+    this.initListeners();
   }
 
   getRowCol(e: MouseEvent) {
@@ -53,17 +57,46 @@ export class Display {
     return { row, col };
   }
 
+  clearPath() {
+    this.grid.clearPath();
+    this.stopAnimation();
+  }
+
+  reset() {
+    this.grid.reset();
+    this.stopAnimation();
+  }
+
+  stopAnimation() {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+
+    this.grid.steps = [];
+    this.state = "IDLE";
+    this.animationIndex = 0;
+
+    this.drawGrid();
+    this.drawCells();
+  }
+
+  setSpeed(name: Speed) {
+    this.animationSpeed = speed[name];
+  }
+
+  setCellType(type: CellType) {
+    this.cellType = type;
+  }
+
   initListeners() {
     this.ctx.canvas.addEventListener("mousedown", (e) => {
       //TODO: use states: iddle, animating, etc...
-      if (this.isAnimationStarted || this.animations.length > 0) {
+      if (this.state !== "IDLE") {
         return;
       }
 
-      if (
-        this.selectedCellType === "start" ||
-        this.selectedCellType === "end"
-      ) {
+      if (this.cellType === "start" || this.cellType === "end") {
         this.isPlacing = false;
       } else {
         this.isPlacing = true;
@@ -71,7 +104,7 @@ export class Display {
 
       const { row, col } = this.getRowCol(e);
 
-      this.grid.setCell(row, col, this.selectedCellType);
+      this.grid.setCell(row, col, this.cellType);
 
       this.drawCells();
     });
@@ -82,7 +115,16 @@ export class Display {
       }
 
       const { row, col } = this.getRowCol(e);
-      this.grid.setCell(row, col);
+
+      const currentCell = this.grid.getCell(row, col);
+      if (
+        this.cellType === "wall" &&
+        (currentCell.type === "start" || currentCell.type === "end")
+      ) {
+        return;
+      }
+
+      this.grid.setCell(row, col, this.cellType);
 
       this.drawCells();
     });
@@ -114,12 +156,106 @@ export class Display {
   }
 
   drawCells(animation?: Cell) {
-    for (const [, cell] of this.cells) {
-      if (cell.row === animation?.row && cell.col === animation?.col) {
-        this.drawCell({ ...cell, type: "current" });
-      } else {
-        this.drawCell(cell);
-      }
+    for (const [, cell] of this.grid.cells) {
+      cell.draw(this.ctx, this.cellSize);
+
+      // if (cell.row === animation?.row && cell.col === animation?.col) {
+      //   this.drawCell({ ...cell, type: "current" });
+      // } else {
+      //   this.drawCell(cell);
+      // }
     }
+  }
+
+  drawPath() {
+    function getMidpoint(row: number, col: number, size: number) {
+      const x = col * size;
+      const y = row * size;
+
+      const x1 = x + size;
+      const y1 = y + size;
+
+      const mx = (x + x1) / 2;
+      const my = (y + y1) / 2;
+
+      return { x: mx, y: my };
+    }
+
+    this.ctx.lineWidth = 8;
+    this.ctx.strokeStyle = "yellow";
+    this.ctx.beginPath();
+
+    for (let i = 0; i < this.grid.path.length; i++) {
+      const { row, col } = this.grid.path[i];
+      const { x, y } = getMidpoint(row, col, this.cellSize);
+
+      if (i === 0) {
+        this.ctx.moveTo(x, y);
+        continue;
+      }
+
+      this.ctx.lineTo(x, y);
+    }
+
+    this.ctx.stroke();
+  }
+
+  animate(onStart: () => void, onFinish: () => void) {
+    this.state = "STARTED";
+    onStart();
+
+    if (this.animationIndex >= this.grid.steps.length) {
+      this.drawCells();
+      this.drawPath();
+
+      onFinish();
+      return;
+    }
+
+    const currentAnimation = this.grid.steps[this.animationIndex];
+
+    this.grid.setCell(
+      currentAnimation.row,
+      currentAnimation.col,
+      currentAnimation.type,
+    );
+
+    this.drawCells(currentAnimation);
+
+    this.animationIndex++;
+
+    setTimeout(() => {
+      this.animationId = requestAnimationFrame(() =>
+        this.animate(onStart, onFinish),
+      );
+    }, this.animationSpeed);
+  }
+
+  animateCreateMaze(onCreate: () => void) {
+    this.state = "STARTED";
+
+    if (this.animationIndex >= this.grid.steps.length) {
+      this.stopAnimation();
+      onCreate();
+      return;
+    }
+
+    const currentAnimation = this.grid.steps[this.animationIndex];
+
+    this.grid.setCell(
+      currentAnimation.row,
+      currentAnimation.col,
+      currentAnimation.type,
+    );
+
+    this.drawCells(currentAnimation);
+
+    this.animationIndex++;
+
+    setTimeout(() => {
+      this.animationId = requestAnimationFrame(() =>
+        this.animateCreateMaze(onCreate),
+      );
+    }, this.animationSpeed);
   }
 }

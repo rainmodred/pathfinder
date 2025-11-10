@@ -1,8 +1,8 @@
 import "./style.css";
-import { Grid, type Speed } from "./Grid";
+import { Grid } from "./Grid";
 import { Table } from "./Table";
+import { Display, type Speed } from "./Display";
 import type { CellType } from "./Cell";
-import { Display } from "./Display";
 
 const header = document.querySelector(".header") as HTMLHeadElement;
 const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
@@ -27,13 +27,12 @@ const rows = Math.floor(
 const cols = Math.floor(window.innerWidth / cellSize);
 
 const grid = new Grid(rows, cols);
-console.log("can:", canvas.width);
 const display = new Display(canvas, grid, cellSize);
 
 let selectedAlgorithm = "BFS";
 selectAlgorithm.addEventListener("change", () => {
   if (selectAlgorithm.value) {
-    grid.clearPath();
+    display.clearPath();
     selectedAlgorithm = selectAlgorithm.value;
     findPathBtn.disabled = false;
   }
@@ -55,45 +54,50 @@ findPathBtn?.addEventListener("click", () => {
   grid.searchPath(selectedAlgorithm, (result) => {
     table.addRow(result);
   });
-  grid.animate(() => {
-    clearPathBtn.disabled = false;
-    selectAlgorithm.disabled = false;
-  });
 
-  if (grid.isAnimationStarted) {
-    findPathBtn.disabled = true;
-    selectAlgorithm.disabled = true;
-    clearPathBtn.disabled = true;
-  }
+  display.animate(
+    () => {
+      findPathBtn.disabled = true;
+      selectAlgorithm.disabled = true;
+      clearPathBtn.disabled = true;
+    },
+    () => {
+      clearPathBtn.disabled = false;
+      selectAlgorithm.disabled = false;
+    },
+  );
 });
 
 clearPathBtn.disabled = true;
 clearPathBtn.addEventListener("click", () => {
-  grid.clearPath();
+  display.clearPath();
   findPathBtn.disabled = false;
   clearPathBtn.disabled = true;
 });
 
 resetBtn?.addEventListener("click", () => {
-  grid.reset();
+  display.reset();
   findPathBtn.disabled = false;
 });
 
 createMazeButton.addEventListener("click", () => {
   createMazeButton.disabled = true;
-  grid.createMaze(() => {
+
+  grid.createMaze();
+  display.animateCreateMaze(() => {
     createMazeButton.disabled = false;
   });
 });
 
 selectSpeed.addEventListener("change", () => {
   if (selectSpeed.value) {
-    grid.changeSpeed(selectSpeed.value as Speed);
+    display.setSpeed(selectSpeed.value as Speed);
   }
 });
 
 selectCellType.addEventListener("change", () => {
   if (selectCellType.value) {
+    display.setCellType(selectCellType.value as CellType);
   }
 });
 
@@ -107,7 +111,7 @@ function renderSelectCellType() {
   ];
 
   const fragment = document.createDocumentFragment();
-  for (let { label, value, selected } of cellTypes) {
+  for (const { label, value, selected } of cellTypes) {
     const option = document.createElement("option");
     option.value = value;
     option.label = label;
