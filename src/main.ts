@@ -1,8 +1,9 @@
 import "./style.css";
 import { Grid } from "./Grid";
 import { Table } from "./Table";
-import { Display, type Speed } from "./Display";
-import type { CellType } from "./Cell";
+import type { NodeType } from "./Node";
+import { Controller } from "./Controller";
+import { View } from "./View";
 
 const header = document.querySelector(".header") as HTMLHeadElement;
 const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
@@ -26,8 +27,17 @@ const rows = Math.floor(
 );
 const cols = Math.floor(window.innerWidth / cellSize);
 
-const grid = new Grid(rows, cols);
-const display = new Display(canvas, grid, cellSize);
+canvas.width = cols * cellSize;
+canvas.height = rows * cellSize;
+
+const controller = new Controller(
+  new Grid(rows, cols),
+  new View(rows, cols, cellSize),
+);
+
+controller.render();
+
+// const display = new Display(canvas, grid, cellSize);
 
 let selectedAlgorithm = "BFS";
 selectAlgorithm.addEventListener("change", () => {
@@ -97,7 +107,7 @@ selectSpeed.addEventListener("change", () => {
 
 selectCellType.addEventListener("change", () => {
   if (selectCellType.value) {
-    display.setCellType(selectCellType.value as CellType);
+    display.setCellType(selectCellType.value as NodeType);
   }
 });
 

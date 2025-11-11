@@ -1,5 +1,5 @@
 import { Grid } from "./Grid";
-import type { Cell, CellType } from "./Cell";
+import type { Node, NodeType } from "./Node";
 
 export const speed = {
   fast: 10,
@@ -18,7 +18,7 @@ export class Display {
   private animationId: number | null = null;
   public state: "IDLE" | "STARTED";
 
-  private cellType: CellType;
+  private cellType: NodeType;
   private isPlacing: boolean;
   private cellSize: number;
 
@@ -85,7 +85,7 @@ export class Display {
     this.animationSpeed = speed[name];
   }
 
-  setCellType(type: CellType) {
+  setCellType(type: NodeType) {
     this.cellType = type;
   }
 
@@ -104,7 +104,7 @@ export class Display {
 
       const { row, col } = this.getRowCol(e);
 
-      this.grid.setCell(row, col, this.cellType);
+      this.grid.setNode(row, col, this.cellType);
 
       this.drawCells();
     });
@@ -116,7 +116,7 @@ export class Display {
 
       const { row, col } = this.getRowCol(e);
 
-      const currentCell = this.grid.getCell(row, col);
+      const currentCell = this.grid.getNodeAt(row, col);
       if (
         this.cellType === "wall" &&
         (currentCell.type === "start" || currentCell.type === "end")
@@ -124,7 +124,7 @@ export class Display {
         return;
       }
 
-      this.grid.setCell(row, col, this.cellType);
+      this.grid.setNode(row, col, this.cellType);
 
       this.drawCells();
     });
@@ -155,7 +155,7 @@ export class Display {
     }
   }
 
-  drawCells(animation?: Cell) {
+  drawCells(animation?: Node) {
     for (const [, cell] of this.grid.cells) {
       cell.draw(this.ctx, this.cellSize);
 
@@ -214,7 +214,7 @@ export class Display {
 
     const currentAnimation = this.grid.steps[this.animationIndex];
 
-    this.grid.setCell(
+    this.grid.setNode(
       currentAnimation.row,
       currentAnimation.col,
       currentAnimation.type,
@@ -242,7 +242,7 @@ export class Display {
 
     const currentAnimation = this.grid.steps[this.animationIndex];
 
-    this.grid.setCell(
+    this.grid.setNode(
       currentAnimation.row,
       currentAnimation.col,
       currentAnimation.type,
