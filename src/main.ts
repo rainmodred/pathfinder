@@ -17,7 +17,7 @@ const selectAlgorithm = document.getElementById(
   "algorithm",
 ) as HTMLSelectElement;
 const selectSpeed = document.getElementById("speed") as HTMLSelectElement;
-const selectCellType = document.getElementById(
+const selectNodeType = document.getElementById(
   "select-cell",
 ) as HTMLSelectElement;
 
@@ -105,9 +105,9 @@ selectSpeed.addEventListener("change", () => {
   }
 });
 
-selectCellType.addEventListener("change", () => {
-  if (selectCellType.value) {
-    display.setCellType(selectCellType.value as NodeType);
+selectNodeType.addEventListener("change", () => {
+  if (selectNodeType.value) {
+    controller.setNodeType(selectNodeType.value as NodeType);
   }
 });
 
@@ -130,7 +130,7 @@ function renderSelectCellType() {
     fragment.appendChild(option);
   }
 
-  selectCellType.appendChild(fragment);
+  selectNodeType.appendChild(fragment);
 }
 renderSelectCellType();
 

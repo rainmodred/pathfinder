@@ -7,6 +7,8 @@ export class View {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
 
+  public isPlacing: boolean;
+
   constructor(rows: number, cols: number, cellSize: number) {
     this.cellSize = cellSize;
 
@@ -15,6 +17,8 @@ export class View {
 
     this.canvas.width = cols * cellSize;
     this.canvas.height = rows * this.cellSize;
+
+    this.isPlacing = false;
   }
 
   getRowCol(e: MouseEvent) {
@@ -35,33 +39,22 @@ export class View {
     });
   }
 
-  // onMouseMove() {
-  //   this.ctx.canvas.addEventListener("mousemove", (e) => {
-  //     if (!this.isPlacing) {
-  //       return;
-  //     }
-  //
-  //     const { row, col } = this.getRowCol(e);
-  //
-  //     const currentCell = this.grid.getNodeAt(row, col);
-  //     if (
-  //       this.cellType === "wall" &&
-  //       (currentCell.type === "start" || currentCell.type === "end")
-  //     ) {
-  //       return;
-  //     }
-  //
-  //     this.grid.setNode(row, col, this.cellType);
-  //
-  //     this.drawCells();
-  //   });
-  // }
+  onMouseMove(handler: (row: number, col: number) => void) {
+    this.ctx.canvas.addEventListener("mousemove", (e) => {
+      if (!this.isPlacing) {
+        return;
+      }
 
-  // onMouseUp() {
-  //   this.ctx.canvas.addEventListener("mouseup", () => {
-  //     this.isPlacing = false;
-  //   });
-  // }
+      const { row, col } = this.getRowCol(e);
+      handler(row, col);
+    });
+  }
+
+  onMouseUp() {
+    this.ctx.canvas.addEventListener("mouseup", () => {
+      this.isPlacing = false;
+    });
+  }
 
   drawGrid(rows: number, cols: number) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -87,7 +80,7 @@ export class View {
   drawNodes(nodes: Nodes) {
     for (let row = 0; row < nodes.length; row++) {
       for (let col = 0; col < nodes[0].length; col++) {
-        let node = nodes[row][col];
+        const node = nodes[row][col];
         this.drawNode(node);
       }
     }
@@ -116,5 +109,35 @@ export class View {
       this.cellSize - 2,
       this.cellSize - 2,
     );
+  }
+
+  animate(onStart: () => void, onFinish: () => void) {
+    onStart();
+
+    if (this.animationIndex >= this.grid.steps.length) {
+      this.drawCells();
+      this.drawPath();
+
+      onFinish();
+      return;
+    }
+
+    const currentAnimation = this.grid.steps[this.animationIndex];
+
+    this.grid.setNode(
+      currentAnimation.row,
+      currentAnimation.col,
+      currentAnimation.type,
+    );
+
+    this.drawCells(currentAnimation);
+
+    this.animationIndex++;
+
+    setTimeout(() => {
+      this.animationId = requestAnimationFrame(() =>
+        this.animate(onStart, onFinish),
+      );
+    }, this.animationSpeed);
   }
 }

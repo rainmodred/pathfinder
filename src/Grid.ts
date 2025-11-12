@@ -67,31 +67,44 @@ export class Grid {
   }
 
   setNode(row: number, col: number, type: NodeType) {
-    //TODO: remove
-    // const currentCell = this.getCell(row, col);
-    // if (
-    //   type === "wall" &&
-    //   (currentCell.type === "start" || currentCell.type === "end")
-    // ) {
-    //   return;
-    // }
+    const currentNode = this.getNodeAt(row, col);
 
-    this.nodes[row][col] = new Node({ row, col, type });
+    switch (type) {
+      case "start":
+        if (!this.isEmptyNode(row, col)) {
+          return;
+        }
 
-    if (type === "start") {
-      this.start = { row, col };
-    }
+        //clear prev start node
+        this.nodes[this.start.row][this.start.col].type = "empty";
+        currentNode.type = type;
 
-    if (type === "end" && this.end) {
-      this.end = { row, col };
+        this.start = { row, col };
+        break;
+
+      case "end":
+        if (!this.isEmptyNode(row, col)) {
+          return;
+        }
+
+        this.nodes[this.end.row][this.end.col].type = "empty";
+        currentNode.type = type;
+        this.end = { row, col };
+        break;
+      default:
+        if (currentNode.type === "start" || currentNode.type === "end") {
+          return;
+        }
+
+        currentNode.type = type;
     }
   }
 
-  isEmptyCell(row: number, col: number) {
+  isEmptyNode(row: number, col: number) {
     return this.getNodeAt(row, col).type === "empty";
   }
 
-  isSameCell(a: Node, b: Node) {
+  isSameNode(a: Node, b: Node) {
     return a.row === b.row && a.col === b.col;
   }
 

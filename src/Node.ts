@@ -12,16 +12,16 @@ export class Node {
   public type: NodeType;
 
   // public key: string;
-  public weight: number;
-  public isSearched: boolean;
+  // public weight: number;
+  // public isSearched: boolean;
 
   constructor({ row, col, type }: Options) {
     this.row = row;
     this.col = col;
     this.type = type;
 
-    this.weight = 1;
-    this.isSearched = true;
+    // this.weight = 1;
+    // this.isSearched = true;
     // this.key = Cell.toKey(row, col);
   }
 }
