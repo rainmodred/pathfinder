@@ -57,25 +57,31 @@ const table = new Table(tableEl, [
 ]);
 
 findPathBtn?.addEventListener("click", () => {
-  if (!grid.start || !grid.end) {
-    return;
-  }
-
-  grid.searchPath(selectedAlgorithm, (result) => {
-    table.addRow(result);
-  });
-
-  display.animate(
-    () => {
-      findPathBtn.disabled = true;
-      selectAlgorithm.disabled = true;
-      clearPathBtn.disabled = true;
-    },
-    () => {
-      clearPathBtn.disabled = false;
-      selectAlgorithm.disabled = false;
-    },
+  controller.search(
+    selectedAlgorithm,
+    () => {},
+    () => {},
   );
+
+  // if (!grid.start || !grid.end) {
+  //   return;
+  // }
+  //
+  // grid.searchPath(selectedAlgorithm, (result) => {
+  //   table.addRow(result);
+  // });
+  //
+  // display.animate(
+  //   () => {
+  //     findPathBtn.disabled = true;
+  //     selectAlgorithm.disabled = true;
+  //     clearPathBtn.disabled = true;
+  //   },
+  //   () => {
+  //     clearPathBtn.disabled = false;
+  //     selectAlgorithm.disabled = false;
+  //   },
+  // );
 });
 
 clearPathBtn.disabled = true;

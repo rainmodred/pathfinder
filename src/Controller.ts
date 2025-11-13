@@ -1,6 +1,6 @@
 import { bfs } from "./algorithms/bfs";
 import type { Grid } from "./Grid";
-import type { NodeType } from "./Node";
+import type { NodeType, Node } from "./Node";
 import type { View } from "./View";
 
 export class Controller {
@@ -45,9 +45,15 @@ export class Controller {
     this.view.drawNodes(this.grid.nodes);
   }
 
-  search() {
-    const { path, nodesToAnimate } = bfs();
+  search(algorithm: string, onStart: () => void, onFinish: () => void) {
+    onStart();
+    const nodesToAnimate: Node[] = [];
 
-    this.view.animate();
+    const { path, visited } = bfs(this.grid, nodesToAnimate);
+    console.log("path:", path, nodesToAnimate);
+
+    this.view.animate(nodesToAnimate, 0);
+
+    onFinish();
   }
 }

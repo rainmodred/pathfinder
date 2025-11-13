@@ -9,6 +9,8 @@ export class View {
 
   public isPlacing: boolean;
 
+  private animationId: number;
+
   constructor(rows: number, cols: number, cellSize: number) {
     this.cellSize = cellSize;
 
@@ -19,6 +21,8 @@ export class View {
     this.canvas.height = rows * this.cellSize;
 
     this.isPlacing = false;
+
+    this.animationId = 0;
   }
 
   getRowCol(e: MouseEvent) {
@@ -111,33 +115,26 @@ export class View {
     );
   }
 
-  animate(onStart: () => void, onFinish: () => void) {
-    onStart();
+  animate(nodesToAnimate: Node[], animationIndex: number) {
+    if (animationIndex >= nodesToAnimate.length) {
+      // this.drawGrid();
+      // this.drawPath();
 
-    if (this.animationIndex >= this.grid.steps.length) {
-      this.drawCells();
-      this.drawPath();
-
-      onFinish();
+      // onFinish();
       return;
     }
 
-    const currentAnimation = this.grid.steps[this.animationIndex];
+    const currentNode = nodesToAnimate[animationIndex];
+    this.drawNode(currentNode);
 
-    this.grid.setNode(
-      currentAnimation.row,
-      currentAnimation.col,
-      currentAnimation.type,
-    );
-
-    this.drawCells(currentAnimation);
-
-    this.animationIndex++;
+    // this.grid.setNode(currentNode.row, currentNode.col, currentNode.type);
+    // this.drawCells(currentNode);
+    // this.animationIndex++;
 
     setTimeout(() => {
       this.animationId = requestAnimationFrame(() =>
-        this.animate(onStart, onFinish),
+        this.animate(nodesToAnimate, animationIndex + 1),
       );
-    }, this.animationSpeed);
+    }, 100);
   }
 }

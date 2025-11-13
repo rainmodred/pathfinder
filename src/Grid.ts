@@ -108,7 +108,7 @@ export class Grid {
     return a.row === b.row && a.col === b.col;
   }
 
-  getNeighbors(cell: Node) {
+  getNeighbors(node: Node) {
     const directions = [
       [-1, 0],
       [0, 1],
@@ -116,14 +116,14 @@ export class Grid {
       [1, 0],
     ];
 
-    const cells = [];
+    const nodes = [];
     for (const [posRow, posCol] of directions) {
-      const row = cell.row + posRow;
-      const col = cell.col + posCol;
+      const row = node.row + posRow;
+      const col = node.col + posCol;
       if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-        cells.push(this.getNodeAt(row, col));
+        nodes.push(this.getNodeAt(row, col));
       }
     }
-    return cells;
+    return nodes;
   }
 }
