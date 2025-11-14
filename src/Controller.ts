@@ -1,7 +1,10 @@
+import { aStar } from "./algorithms/aStar";
 import { bfs } from "./algorithms/bfs";
+import { dfs } from "./algorithms/dfs";
 import type { Grid } from "./Grid";
+import { createMaze } from "./maze";
 import type { NodeType, Node } from "./Node";
-import type { View } from "./View";
+import type { Speed, View } from "./View";
 
 export class Controller {
   private grid: Grid;
@@ -49,11 +52,52 @@ export class Controller {
     onStart();
     const nodesToAnimate: Node[] = [];
 
-    const { path, visited } = bfs(this.grid, nodesToAnimate);
-    console.log("path:", path, nodesToAnimate);
+    console.log(algorithm);
+    let result: { path: Node[]; visited: number };
+    switch (algorithm) {
+      case "bfs":
+        result = bfs(this.grid, nodesToAnimate);
+        break;
+      case "dfs":
+        result = dfs(this.grid, nodesToAnimate);
+        break;
+      case "aStar":
+        result = aStar(this.grid, nodesToAnimate);
+        break;
+    }
 
-    this.view.animate(nodesToAnimate, 0);
+    this.view.animate(nodesToAnimate, 0, () => {
+      this.view.drawPath(result.path);
 
-    onFinish();
+      onFinish();
+    });
+  }
+
+  createMaze(onFinish: () => void) {
+    const nodesToAnimate: Node[] = [];
+    createMaze(this.grid, nodesToAnimate);
+    console.log(nodesToAnimate);
+
+    for (const node of nodesToAnimate) {
+      this.grid.setNode(node.row, node.col, node.type);
+    }
+
+    console.log(this.grid);
+    this.view.animateCreateMaze(nodesToAnimate, 0, onFinish);
+  }
+
+  clearPath() {
+    this.view.drawGrid(this.grid.rows, this.grid.cols);
+    this.view.drawNodes(this.grid.nodes);
+  }
+
+  reset() {
+    this.grid.reset();
+    this.view.stopAnimation();
+    this.clearPath();
+  }
+
+  setSpeed(name: Speed) {
+    this.view.speed = name;
   }
 }

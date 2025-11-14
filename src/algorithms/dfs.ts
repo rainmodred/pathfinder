@@ -1,20 +1,18 @@
 import type { Grid } from "../Grid";
-import type { Node } from "../Node.ts";
+import type { Node } from "../Node";
 import { reconstructPath } from "./utils";
 
-export function bfs(grid: Grid, nodesToAnimate: Node[]) {
-  const queue: Node[] = [];
-  const visited = new Set();
-
-  //TODO:
+export function dfs(grid: Grid, nodesToAnimate: Node[]) {
   const start = grid.getNodeAt(grid.start.row, grid.start.col);
   const end = grid.getNodeAt(grid.end.row, grid.end.col);
 
-  queue.push(start);
+  const stack: Node[] = [start];
+
+  const visited = new Set();
   visited.add(start.key);
 
-  while (queue.length > 0) {
-    const current = queue.shift()!;
+  while (stack.length > 0) {
+    const current = stack.pop()!;
 
     if (!grid.isSameNode(current, end) && !grid.isSameNode(current, start)) {
       nodesToAnimate.push({ ...current, type: "search" });
@@ -26,19 +24,22 @@ export function bfs(grid: Grid, nodesToAnimate: Node[]) {
       return { path, visited: visited.size };
     }
 
+    if (!visited.has(current.key)) {
+      visited.add(current.key);
+    }
     const neighbors = grid.getNeighbors(current);
+
     for (const neighbor of neighbors) {
+      if (neighbor?.type === "wall") {
+        continue;
+      }
+
       if (!visited.has(neighbor.key)) {
-        visited.add(neighbor.key);
-
-        if (neighbor.type === "wall") {
-          continue;
-        }
-
-        queue.push(neighbor);
+        stack.push(neighbor);
         neighbor.parent = current;
       }
     }
   }
+
   return { path: [], visited: 0 };
 }

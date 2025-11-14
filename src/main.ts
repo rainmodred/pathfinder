@@ -3,14 +3,14 @@ import { Grid } from "./Grid";
 import { Table } from "./Table";
 import type { NodeType } from "./Node";
 import { Controller } from "./Controller";
-import { View } from "./View";
+import { View, type Speed } from "./View";
 
 const header = document.querySelector(".header") as HTMLHeadElement;
 const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
 const findPathBtn = document.getElementById("find-path") as HTMLButtonElement;
 const clearPathBtn = document.getElementById("clear-path") as HTMLButtonElement;
 const resetBtn = document.getElementById("reset") as HTMLButtonElement;
-const createMazeButton = document.getElementById(
+const createMazeBtn = document.getElementById(
   "create-maze",
 ) as HTMLButtonElement;
 const selectAlgorithm = document.getElementById(
@@ -37,14 +37,11 @@ const controller = new Controller(
 
 controller.render();
 
-// const display = new Display(canvas, grid, cellSize);
-
-let selectedAlgorithm = "BFS";
+let selectedAlgorithm = "bfs";
 selectAlgorithm.addEventListener("change", () => {
   if (selectAlgorithm.value) {
-    display.clearPath();
+    controller.clearPath();
     selectedAlgorithm = selectAlgorithm.value;
-    findPathBtn.disabled = false;
   }
 });
 
@@ -59,55 +56,47 @@ const table = new Table(tableEl, [
 findPathBtn?.addEventListener("click", () => {
   controller.search(
     selectedAlgorithm,
-    () => {},
-    () => {},
-  );
+    () => {
+      findPathBtn.disabled = true;
+      selectAlgorithm.disabled = true;
+      clearPathBtn.disabled = true;
+    },
 
-  // if (!grid.start || !grid.end) {
-  //   return;
-  // }
-  //
-  // grid.searchPath(selectedAlgorithm, (result) => {
-  //   table.addRow(result);
-  // });
-  //
-  // display.animate(
-  //   () => {
-  //     findPathBtn.disabled = true;
-  //     selectAlgorithm.disabled = true;
-  //     clearPathBtn.disabled = true;
-  //   },
-  //   () => {
-  //     clearPathBtn.disabled = false;
-  //     selectAlgorithm.disabled = false;
-  //   },
-  // );
+    () => {
+      selectAlgorithm.disabled = false;
+      clearPathBtn.disabled = false;
+
+      //TODO: fix table
+      // table.addRow([selectedAlgorithm, ''])
+    },
+  );
 });
 
 clearPathBtn.disabled = true;
 clearPathBtn.addEventListener("click", () => {
-  display.clearPath();
+  controller.clearPath();
   findPathBtn.disabled = false;
   clearPathBtn.disabled = true;
 });
 
 resetBtn?.addEventListener("click", () => {
-  display.reset();
-  findPathBtn.disabled = false;
+  controller.reset();
 });
 
-createMazeButton.addEventListener("click", () => {
-  createMazeButton.disabled = true;
+createMazeBtn.addEventListener("click", () => {
+  createMazeBtn.disabled = true;
+  findPathBtn.disabled = true;
+  selectAlgorithm.disabled = true;
 
-  grid.createMaze();
-  display.animateCreateMaze(() => {
-    createMazeButton.disabled = false;
+  controller.createMaze(() => {
+    findPathBtn.disabled = false;
+    selectAlgorithm.disabled = false;
   });
 });
 
 selectSpeed.addEventListener("change", () => {
   if (selectSpeed.value) {
-    display.setSpeed(selectSpeed.value as Speed);
+    controller.setSpeed(selectSpeed.value as Speed);
   }
 });
 

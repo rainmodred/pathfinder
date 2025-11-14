@@ -40,7 +40,17 @@ export class Grid {
           continue;
         }
 
-        if (row === 2 && col === 5) {
+        // if (row === 2 && col === 5) {
+        //   this.nodes[row][col] = new Node({
+        //     row,
+        //     col,
+        //     type: "end",
+        //   });
+        //   this.end = { row, col };
+        //   continue;
+        // }
+
+        if (row === this.rows - 2 && col === this.cols - 2) {
           this.nodes[row][col] = new Node({
             row,
             col,
@@ -49,13 +59,6 @@ export class Grid {
           this.end = { row, col };
           continue;
         }
-
-        // if (row === this.height - 2 && col === this.width - 2) {
-        //   const cell = new Cell(row, col, "end");
-        //   this.cells.set(cell.key, cell);
-        //   this.end = cell;
-        //   continue;
-        // }
 
         this.nodes[row][col] = new Node({ row, col, type: "empty" });
       }

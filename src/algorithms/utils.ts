@@ -1,23 +1,26 @@
+import type { Grid } from "../Grid.ts";
 import type { Node } from "../Node.ts";
 
 export function reconstructPath(node: Node) {
   const path: Node[] = [];
-  let pathLength = 0;
-  // let key = cameFrom.get(this.end.key);
 
   while (node.parent) {
     path.push(node);
     node = node.parent;
-    // const [row, col] = Node.fromKey(key);
-    //
-    // if (row !== this.start.row || col !== this.start.col) {
-    //   this.path.push(new Node(row, col, "path"));
-    //   pathLength++;
-    // }
-    //
-    // key = cameFrom.get(Node.toKey(row, col));
   }
 
-  // this.path.push(this.start);
+  path.push(node);
   return path;
+}
+
+export function manhattanDistance(a: Node, b: Node) {
+  return Math.abs(b.row - a.row) + Math.abs(b.col - a.col);
+}
+
+export function euclideanDistance(a: Node, b: Node) {
+  return Math.floor(Math.sqrt((b.row - a.row) ** 2 + (b.col - a.col) ** 2));
+}
+
+export function timeDiff(startTime: number, endTime: number) {
+  return `${endTime - startTime} ms`;
 }
