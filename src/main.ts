@@ -1,39 +1,47 @@
 import "./style.css";
-import { Grid, type Speed } from "./Grid";
+import { Grid } from "./Grid";
 import { Table } from "./Table";
-import type { CellType } from "./Cell";
+import type { NodeType } from "./Node";
+import { Controller } from "./Controller";
+import { View, type Speed } from "./View";
 
 const header = document.querySelector(".header") as HTMLHeadElement;
 const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
 const findPathBtn = document.getElementById("find-path") as HTMLButtonElement;
 const clearPathBtn = document.getElementById("clear-path") as HTMLButtonElement;
 const resetBtn = document.getElementById("reset") as HTMLButtonElement;
-const createMazeButton = document.getElementById(
+const createMazeBtn = document.getElementById(
   "create-maze",
 ) as HTMLButtonElement;
 const selectAlgorithm = document.getElementById(
   "algorithm",
 ) as HTMLSelectElement;
 const selectSpeed = document.getElementById("speed") as HTMLSelectElement;
-const selectCellType = document.getElementById(
+const selectNodeType = document.getElementById(
   "select-cell",
 ) as HTMLSelectElement;
 
 const cellSize = 30;
-const width = Math.floor(window.innerWidth / cellSize);
-
-const height = Math.floor(
+const rows = Math.floor(
   (window.innerHeight - header.clientHeight - 16) / cellSize,
 );
+const cols = Math.floor(window.innerWidth / cellSize);
 
-const grid = new Grid(canvas, { width, height, cellSize });
+canvas.width = cols * cellSize;
+canvas.height = rows * cellSize;
 
-let selectedAlgorithm = "BFS";
+const controller = new Controller(
+  new Grid(rows, cols),
+  new View(rows, cols, cellSize),
+);
+
+controller.render();
+
+let selectedAlgorithm = "bfs";
 selectAlgorithm.addEventListener("change", () => {
   if (selectAlgorithm.value) {
-    grid.clearPath();
+    controller.clearPath();
     selectedAlgorithm = selectAlgorithm.value;
-    findPathBtn.disabled = false;
   }
 });
 
@@ -46,53 +54,83 @@ const table = new Table(tableEl, [
 ]);
 
 findPathBtn?.addEventListener("click", () => {
-  if (!grid.start || !grid.end) {
-    return;
-  }
+  controller.search(
+    selectedAlgorithm,
+    () => {
+      findPathBtn.disabled = true;
+      selectAlgorithm.disabled = true;
+      clearPathBtn.disabled = true;
+    },
 
-  grid.searchPath(selectedAlgorithm, (result) => {
-    table.addRow(result);
-  });
-  grid.animate(() => {
-    clearPathBtn.disabled = false;
-    selectAlgorithm.disabled = false;
-  });
+    () => {
+      selectAlgorithm.disabled = false;
+      clearPathBtn.disabled = false;
 
-  if (grid.isAnimationStarted) {
-    findPathBtn.disabled = true;
-    selectAlgorithm.disabled = true;
-    clearPathBtn.disabled = true;
-  }
+      //TODO: fix table
+      // table.addRow([selectedAlgorithm, ''])
+    },
+  );
 });
 
 clearPathBtn.disabled = true;
 clearPathBtn.addEventListener("click", () => {
-  grid.clearPath();
+  controller.clearPath();
   findPathBtn.disabled = false;
   clearPathBtn.disabled = true;
 });
 
 resetBtn?.addEventListener("click", () => {
-  grid.reset();
+  controller.reset();
+
   findPathBtn.disabled = false;
+  selectAlgorithm.disabled = false;
+  createMazeBtn.disabled = false;
 });
 
-createMazeButton.addEventListener("click", () => {
-  createMazeButton.disabled = true;
-  grid.createMaze(() => {
-    createMazeButton.disabled = false;
+createMazeBtn.addEventListener("click", () => {
+  createMazeBtn.disabled = true;
+  findPathBtn.disabled = true;
+  selectAlgorithm.disabled = true;
+
+  controller.createMaze(() => {
+    findPathBtn.disabled = false;
+    selectAlgorithm.disabled = false;
   });
 });
 
 selectSpeed.addEventListener("change", () => {
   if (selectSpeed.value) {
-    grid.changeSpeed(selectSpeed.value as Speed);
+    controller.setSpeed(selectSpeed.value as Speed);
   }
 });
 
-selectCellType.addEventListener("change", () => {
-  if (selectCellType.value) {
-    grid.setSelectedCellType(selectCellType.value as CellType);
+selectNodeType.addEventListener("change", () => {
+  if (selectNodeType.value) {
+    controller.setNodeType(selectNodeType.value as NodeType);
   }
 });
 
+function renderSelectCellType() {
+  const cellTypes = [
+    { label: "empty (1)", value: "empty", selected: false },
+    { label: "wall", value: "wall", selected: true },
+    { label: "hill (5)", value: "hill", selected: false },
+    { label: "start", value: "start", selected: false },
+    { label: "end", value: "end", selected: false },
+  ];
+
+  const fragment = document.createDocumentFragment();
+  for (const { label, value, selected } of cellTypes) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.label = label;
+    option.selected = selected;
+
+    fragment.appendChild(option);
+  }
+
+  selectNodeType.appendChild(fragment);
+}
+renderSelectCellType();
+
+// grid.searchPath("DFS", (res) => console.log(res));
