@@ -75,14 +75,13 @@
 		}
 
 		const colorScheme = {
-			start: '#10B981',
-			end: '#EF4444',
+			start: '#2ECC71',
+			end: '#FF0000',
 			search: 'lightblue',
-			path: 'yellow',
-			wall: '#283140',
+			wall: '#36454F',
 			current: 'orange',
 			empty: 'white',
-			hill: 'brown'
+			hill: '#8B4513'
 		};
 
 		ctx.fillStyle = colorScheme[node.type];
