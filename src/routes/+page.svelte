@@ -132,15 +132,13 @@
 	<header class="flex flex-col gap-2 bg-white p-1" bind:this={header}>
 		<div class="flex gap-4">
 			<h1 class="text-3xl">Pathfinder</h1>
-
-			<!-- TODO: fix shrink -->
 			<div class="flex gap-2">
 				<select class="select" bind:value={selectedAlorithm} onchange={() => clearPath()}>
 					{#each algorithms as { value, label }}
 						<option {value}>{label}</option>
 					{/each}
 				</select>
-				<select class="select" bind:value={selectedNodeType}>
+				<select class="select min-w-24" bind:value={selectedNodeType}>
 					{#each nodeTypes as { value, label }}
 						<option {value}>{label}</option>
 					{/each}
