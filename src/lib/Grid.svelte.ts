@@ -59,41 +59,6 @@ export class Grid {
 			}
 		}
 
-		// for (let row = 0; row < this.rows; row++) {
-		// 	for (let col = 0; col < this.cols; col++) {
-		// 		if (row === 1 && col === 1) {
-		// 			this.nodes[row][col] = new Node({
-		// 				row,
-		// 				col,
-		// 				type: 'start'
-		// 			});
-		// 			this.start = { row, col };
-		// 			continue;
-		// 		}
-		//
-		// 		if (row === 2 && col === 5) {
-		// 			this.nodes[row][col] = new Node({
-		// 				row,
-		// 				col,
-		// 				type: 'end'
-		// 			});
-		// 			this.end = { row, col };
-		// 			continue;
-		// 		}
-		//
-		// 		// if (row === this.rows - 2 && col === this.cols - 2) {
-		// 		//   this.nodes[row][col] = new Node({
-		// 		//     row,
-		// 		//     col,
-		// 		//     type: "end",
-		// 		//   });
-		// 		//   this.end = { row, col };
-		// 		//   continue;
-		// 		// }
-		//
-		// 		this.nodes[row][col] = new Node({ row, col, type: 'empty' });
-		// 	}
-		// }
 	}
 
 	getNodeAt(row: number, col: number) {
