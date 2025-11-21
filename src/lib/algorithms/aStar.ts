@@ -5,8 +5,8 @@ import { euclideanDistance, reconstructPath } from './utils';
 export function aStar(grid: Grid, nodesToAnimate: Node[], heuristic = euclideanDistance) {
 	let visited = 0;
 
-	const start = grid.getNodeAt(grid.start.row, grid.start.col);
-	const end = grid.getNodeAt(grid.end.row, grid.end.col);
+	const start = grid.start;
+	const end = grid.end;
 
 	const openSet = [start];
 

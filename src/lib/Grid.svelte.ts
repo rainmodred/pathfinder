@@ -6,17 +6,16 @@ export class Grid {
 	public cols: number = $state(0);
 	public nodes: Node[][] = $state([]);
 
-	//TODO:fix type
-	public start: Record<string, number>;
-	public end: Record<string, number>;
+	public start: Node;
+	public end: Node;
 
 	constructor(rows: number, cols: number) {
 		this.rows = rows;
 		this.cols = cols;
 		this.nodes = [];
 
-		this.start = {};
-		this.end = {};
+		this.start = new Node({ row: 1, col: 1, type: 'start' });
+		this.end = new Node({ row: this.rows - 2, col: this.cols - 2, type: 'end' });
 
 		this.reset();
 	}
@@ -26,39 +25,29 @@ export class Grid {
 			this.nodes[row] = [];
 			for (let col = 0; col < this.cols; col++) {
 				if (row === 1 && col === 1) {
-					this.nodes[row][col] = new Node({
+					this.start = new Node({
 						row,
 						col,
 						type: 'start'
 					});
-					this.start = { row, col };
+					this.nodes[row][col] = this.start;
 					continue;
 				}
 
-				if (row === 2 && col === 5) {
-					this.nodes[row][col] = new Node({
+				if (row === this.rows - 2 && col === this.cols - 2) {
+					this.end = new Node({
 						row,
 						col,
 						type: 'end'
 					});
-					this.end = { row, col };
+
+					this.nodes[row][col] = this.end;
 					continue;
 				}
-
-				// if (row === this.rows - 2 && col === this.cols - 2) {
-				//   this.nodes[row][col] = new Node({
-				//     row,
-				//     col,
-				//     type: "end",
-				//   });
-				//   this.end = { row, col };
-				//   continue;
-				// }
 
 				this.nodes[row][col] = new Node({ row, col, type: 'empty' });
 			}
 		}
-
 	}
 
 	getNodeAt(row: number, col: number) {
@@ -70,25 +59,24 @@ export class Grid {
 
 		switch (type) {
 			case 'start':
-				if (!this.isEmptyNode(row, col)) {
+				if (!this.isEmptyNode(row, col) || !this.start) {
 					return;
 				}
 
 				//clear prev start node
 				this.nodes[this.start.row][this.start.col].type = 'empty';
 				currentNode.type = type;
-
-				this.start = { row, col };
+				this.start = currentNode;
 				break;
 
 			case 'end':
-				if (!this.isEmptyNode(row, col)) {
+				if (!this.isEmptyNode(row, col) || !this.end) {
 					return;
 				}
 
 				this.nodes[this.end.row][this.end.col].type = 'empty';
 				currentNode.type = type;
-				this.end = { row, col };
+				this.end = currentNode;
 				break;
 			default:
 				if (currentNode.type === 'start' || currentNode.type === 'end') {

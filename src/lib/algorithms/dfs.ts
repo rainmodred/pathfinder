@@ -3,8 +3,8 @@ import { Node } from '../Node';
 import { reconstructPath } from './utils';
 
 export function dfs(grid: Grid, nodesToAnimate: Node[]) {
-	const start = grid.getNodeAt(grid.start.row, grid.start.col);
-	const end = grid.getNodeAt(grid.end.row, grid.end.col);
+	const start = grid.start;
+	const end = grid.end;
 
 	const stack: Node[] = [start];
 

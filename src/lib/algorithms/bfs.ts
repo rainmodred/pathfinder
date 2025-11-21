@@ -6,9 +6,8 @@ export function bfs(grid: Grid, nodesToAnimate: Node[]) {
 	const queue: Node[] = [];
 	const visited = new Set();
 
-	//TODO:
-	const start = grid.getNodeAt(grid.start.row, grid.start.col);
-	const end = grid.getNodeAt(grid.end.row, grid.end.col);
+	const start = grid.start;
+	const end = grid.end;
 
 	queue.push(start);
 	visited.add(start.key);
