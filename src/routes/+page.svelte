@@ -31,7 +31,8 @@
 		{ label: 'Wall', value: 'wall' },
 		{ label: 'Start', value: 'start' },
 		{ label: 'End', value: 'end' },
-		{ label: 'Empty', value: 'empty' }
+		{ label: 'Empty', value: 'empty' },
+		{ label: 'Hill', value: 'hill' }
 	];
 
 	let selectedAlorithm = $state(algorithms[2].value as Algorithm);

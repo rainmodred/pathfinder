@@ -1,5 +1,5 @@
 import type { Grid } from '../Grid.svelte';
-import type { Node } from '../Node.ts';
+import { Node } from '../Node.ts';
 import { reconstructPath } from './utils';
 
 export function bfs(grid: Grid, nodesToAnimate: Node[]) {
@@ -16,8 +16,8 @@ export function bfs(grid: Grid, nodesToAnimate: Node[]) {
 	while (queue.length > 0) {
 		const current = queue.shift()!;
 
-		if (!grid.isSameNode(current, end) && !grid.isSameNode(current, start)) {
-			nodesToAnimate.push({ ...current, type: 'search' });
+		if (grid.isEmptyNode(current.row, current.col)) {
+			nodesToAnimate.push(new Node({ row: current.row, col: current.col, type: 'search' }));
 		}
 
 		if (grid.isSameNode(current, end)) {

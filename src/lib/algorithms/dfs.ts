@@ -1,5 +1,5 @@
 import type { Grid } from '$lib/Grid.svelte';
-import type { Node } from '../Node';
+import { Node } from '../Node';
 import { reconstructPath } from './utils';
 
 export function dfs(grid: Grid, nodesToAnimate: Node[]) {
@@ -14,8 +14,8 @@ export function dfs(grid: Grid, nodesToAnimate: Node[]) {
 	while (stack.length > 0) {
 		const current = stack.pop()!;
 
-		if (!grid.isSameNode(current, end) && !grid.isSameNode(current, start)) {
-			nodesToAnimate.push({ ...current, type: 'search' });
+		if (grid.isEmptyNode(current.row, current.col)) {
+			nodesToAnimate.push(new Node({ row: current.row, col: current.col, type: 'search' }));
 		}
 
 		if (grid.isSameNode(current, end)) {

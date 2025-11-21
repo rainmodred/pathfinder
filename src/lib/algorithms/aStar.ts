@@ -1,5 +1,5 @@
 import type { Grid } from '../Grid.svelte';
-import type { Node } from '../Node.ts';
+import { Node } from '../Node.ts';
 import { euclideanDistance, reconstructPath } from './utils';
 
 export function aStar(grid: Grid, nodesToAnimate: Node[], heuristic = euclideanDistance) {
@@ -37,8 +37,8 @@ export function aStar(grid: Grid, nodesToAnimate: Node[], heuristic = euclideanD
 	while (openSet.length > 0) {
 		const current = getCurrent();
 
-		if (!grid.isSameNode(current, end) && !grid.isSameNode(current, start)) {
-			nodesToAnimate.push({ ...current, type: 'search' });
+		if (grid.isEmptyNode(current.row, current.col)) {
+			nodesToAnimate.push(new Node({ row: current.row, col: current.col, type: 'search' }));
 		}
 
 		if (grid.isSameNode(current, end)) {
@@ -49,8 +49,7 @@ export function aStar(grid: Grid, nodesToAnimate: Node[], heuristic = euclideanD
 
 		const neighbors = grid.getNeighbors(current);
 		for (const neighbor of neighbors) {
-			//TODO: move weight to Cell class
-			const weight = neighbor.type === 'hill' ? 5 : 1;
+			const weight = neighbor.weight;
 			const tentativeGscore = gScore.get(current.key) + weight;
 
 			const g = gScore.get(neighbor.key) ?? Infinity;

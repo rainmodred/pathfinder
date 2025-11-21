@@ -12,7 +12,7 @@ export function createMaze(grid: Grid, nodesToAnimate: Node[]) {
 				node.col === 0 ||
 				node.col === grid.cols - 1
 			) {
-				nodesToAnimate.push({ ...node, type: 'wall' });
+				nodesToAnimate.push(new Node({ row: node.row, col: node.col, type: 'wall' }));
 			}
 		}
 	}
