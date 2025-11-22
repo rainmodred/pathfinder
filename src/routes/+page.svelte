@@ -2,6 +2,7 @@
 	import { aStar } from '$lib/algorithms/aStar';
 	import { bfs } from '$lib/algorithms/bfs';
 	import { dfs } from '$lib/algorithms/dfs';
+	import { dijkstra } from '$lib/algorithms/dijkstra';
 	import Canvas from '$lib/components/Canvas.svelte';
 	import type { TableData } from '$lib/components/Table.svelte';
 	import Table from '$lib/components/Table.svelte';
@@ -13,6 +14,7 @@
 	const algorithms = [
 		{ label: 'DFS', value: 'DFS' },
 		{ label: 'BFS', value: 'BFS' },
+		{ label: 'Dijkstra', value: 'Dijkstra' },
 		{ label: 'A*', value: 'A*' }
 	] as const;
 
@@ -78,6 +80,9 @@
 				break;
 			case 'DFS':
 				result = dfs(grid, nodesToAnimate);
+				break;
+			case 'Dijkstra':
+				result = dijkstra(grid, nodesToAnimate);
 				break;
 			case 'A*':
 				result = aStar(grid, nodesToAnimate);
