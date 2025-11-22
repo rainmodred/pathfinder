@@ -7,7 +7,7 @@ type Options = {
 };
 
 const weights: Partial<Record<NodeType, number>> = {
-	hill: 5
+	hill: 8
 };
 
 export class Node {

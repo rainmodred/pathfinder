@@ -3,12 +3,14 @@
 	import { bfs } from '$lib/algorithms/bfs';
 	import { dfs } from '$lib/algorithms/dfs';
 	import { dijkstra } from '$lib/algorithms/dijkstra';
+	import { MinHeap } from '$lib/algorithms/MinHeap';
+	import { euclideanDistance } from '$lib/algorithms/utils';
 	import Canvas from '$lib/components/Canvas.svelte';
 	import type { TableData } from '$lib/components/Table.svelte';
 	import Table from '$lib/components/Table.svelte';
 	import { Grid } from '$lib/Grid.svelte';
 	import { createMaze } from '$lib/maze';
-	import type { NodeType, Node } from '$lib/Node';
+	import { type NodeType, Node } from '$lib/Node';
 	import { timeDiff } from '$lib/utils';
 
 	const algorithms = [
